@@ -249,7 +249,7 @@ class SearchController extends AbstractController
             // for bit fields we need to convert them to printable form
             $i = 0;
             foreach ($row as $col => $val) {
-                if ($fields_meta[$i]->type === 'bit') {
+                if (isset($fields_meta[$i]) && $fields_meta[$i]->isMappedTypeBit) {
                     $row[$col] = Util::printableBitValue(
                         (int) $val,
                         (int) $fields_meta[$i]->length
@@ -269,8 +269,6 @@ class SearchController extends AbstractController
      */
     public function doSelectionAction()
     {
-        global $PMA_Theme;
-
         /**
          * Selection criteria have been submitted -> do the work
          */
@@ -299,7 +297,6 @@ class SearchController extends AbstractController
             null, // message_to_show
             null, // sql_data
             $GLOBALS['goto'], // goto
-            $PMA_Theme->getImgPath(),
             null, // disp_query
             null, // disp_message
             $sql_query, // sql_query
@@ -412,8 +409,8 @@ class SearchController extends AbstractController
                             . 'data-max="' . $minMaxValues[1] . '"';
         }
 
-        $htmlAttributes .= ' onchange="return '
-                        . 'verifyAfterSearchFieldChange(' . $column_index . ', \'#tbl_search_form\')"';
+        $htmlAttributes .= ' onfocus="return '
+                        . 'verifyAfterSearchFieldChange(' . $search_index . ', \'#tbl_search_form\')"';
 
         $value = $this->template->render('table/search/input_box', [
             'str' => '',

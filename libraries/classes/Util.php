@@ -11,8 +11,7 @@ use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Context;
 use PhpMyAdmin\SqlParser\Token;
 use PhpMyAdmin\Utils\SessionCache;
-use phpseclib\Crypt\Random;
-use stdClass;
+use phpseclib3\Crypt\Random;
 use const ENT_COMPAT;
 use const ENT_QUOTES;
 use const PHP_INT_SIZE;
@@ -78,7 +77,6 @@ use function str_pad;
 use function str_replace;
 use function strcasecmp;
 use function strftime;
-use function stripos;
 use function strlen;
 use function strpos;
 use function strrev;
@@ -934,8 +932,7 @@ class Util
      * Build a condition and with a value
      *
      * @param string|int|float|null $row          The row value
-     * @param stdClass              $meta         The field metadata
-     * @param string                $fieldFlags   The field flags
+     * @param FieldMetadata         $meta         The field metadata
      * @param int                   $fieldsCount  A number of fields
      * @param string                $conditionKey A key used for BINARY fields functions
      * @param string                $condition    The condition
@@ -944,8 +941,7 @@ class Util
      */
     private static function getConditionValue(
         $row,
-        stdClass $meta,
-        string $fieldFlags,
+        FieldMetadata $meta,
         int $fieldsCount,
         string $conditionKey,
         string $condition
@@ -959,13 +955,15 @@ class Util
         $conditionValue = '';
         // timestamp is numeric on some MySQL 4.1
         // for real we use CONCAT above and it should compare to string
-        if ($meta->numeric
-            && ($meta->type !== 'timestamp')
-            && ($meta->type !== 'real')
+        // See commit: 049fc7fef7548c2ba603196937c6dcaf9ff9bf00
+        // See bug: https://sourceforge.net/p/phpmyadmin/bugs/3064/
+        if ($meta->isNumeric
+            && ! $meta->isMappedTypeTimestamp
+            && $meta->isNotType(FieldMetadata::TYPE_REAL)
         ) {
             $conditionValue = '= ' . $row;
-        } elseif (($meta->type === 'blob') || ($meta->type === 'string')
-            && stripos($fieldFlags, 'BINARY') !== false
+        } elseif ($meta->isType(FieldMetadata::TYPE_BLOB) || ($meta->isType(FieldMetadata::TYPE_STRING))
+            && $meta->isBinary()
             && ! empty($row)
         ) {
             // hexify only if this is a true not empty BLOB or a BINARY
@@ -984,7 +982,7 @@ class Util
                 // this blob won't be part of the final condition
                 $conditionValue = null;
             }
-        } elseif (in_array($meta->type, self::getGISDatatypes())
+        } elseif ($meta->isMappedTypeGeometry
             && ! empty($row)
         ) {
             // do not build a too big condition
@@ -993,7 +991,7 @@ class Util
             } else {
                 $condition = '';
             }
-        } elseif ($meta->type === 'bit') {
+        } elseif ($meta->isMappedTypeBit) {
             $conditionValue = "= b'"
                 . self::printableBitValue((int) $row, (int) $meta->length) . "'";
         } else {
@@ -1007,13 +1005,13 @@ class Util
     /**
      * Function to generate unique condition for specified row.
      *
-     * @param resource|int $handle            current query result
-     * @param int          $fields_cnt        number of fields
-     * @param stdClass[]   $fields_meta       meta information about fields
-     * @param array        $row               current row
-     * @param bool         $force_unique      generate condition only on pk or unique
-     * @param string|bool  $restrict_to_table restrict the unique condition to this table or false if none
-     * @param Expression[] $expressions       An array of Expression instances.
+     * @param resource|int    $handle            current query result
+     * @param int             $fields_cnt        number of fields
+     * @param FieldMetadata[] $fields_meta       meta information about fields
+     * @param array           $row               current row
+     * @param bool            $force_unique      generate condition only on pk or unique
+     * @param string|bool     $restrict_to_table restrict the unique condition to this table or false if none
+     * @param Expression[]    $expressions       An array of Expression instances.
      *
      * @return array the calculated condition and whether condition is unique
      */
@@ -1084,7 +1082,7 @@ class Util
             // floating comparison, use CONCAT
             // (also, the syntax "CONCAT(field) IS NULL"
             // that we need on the next "if" will work)
-            if ($meta->type === 'real') {
+            if ($meta->isType(FieldMetadata::TYPE_REAL)) {
                 $con_key = 'CONCAT(' . self::backquote($meta->table) . '.'
                     . self::backquote($meta->orgname) . ')';
             } else {
@@ -1096,7 +1094,6 @@ class Util
             [$con_val, $condition] = self::getConditionValue(
                 $row[$i] ?? null,
                 $meta,
-                $dbi->fieldFlags($handle, $i),
                 $fields_cnt,
                 $con_key,
                 $condition
@@ -1108,10 +1105,10 @@ class Util
 
             $condition .= $con_val . ' AND';
 
-            if ($meta->primary_key > 0) {
+            if ($meta->isPrimaryKey()) {
                 $primary_key .= $condition;
                 $primary_key_array[$con_key] = $con_val;
-            } elseif ($meta->unique_key > 0) {
+            } elseif ($meta->isUniqueKey()) {
                 $unique_key  .= $condition;
                 $unique_key_array[$con_key] = $con_val;
             }
@@ -1295,6 +1292,10 @@ class Util
             // double, we unify our array:
             sort($pages);
             $pages = array_unique($pages);
+        }
+
+        if ($pageNow > $nbTotalPage) {
+            $pages[] = $pageNow;
         }
 
         foreach ($pages as $i) {
@@ -1598,8 +1599,9 @@ class Util
      *
      * @return bool Default foreign key checks value
      */
-    public static function handleDisableFKCheckInit()
+    public static function handleDisableFKCheckInit(): bool
     {
+        /** @var DatabaseInterface $dbi */
         global $dbi;
 
         $default_fk_check_value = $dbi->getVariable('FOREIGN_KEY_CHECKS') === 'ON';
@@ -1621,8 +1623,9 @@ class Util
      *
      * @param bool $default_fk_check_value original value for 'FOREIGN_KEY_CHECKS'
      */
-    public static function handleDisableFKCheckCleanup($default_fk_check_value): void
+    public static function handleDisableFKCheckCleanup(bool $default_fk_check_value): void
     {
+        /** @var DatabaseInterface $dbi */
         global $dbi;
 
         $dbi->setVariable(
@@ -1732,33 +1735,56 @@ class Util
      *
      * @return string script name corresponding to the config word
      */
-    public static function getScriptNameForOption($target, $location)
+    public static function getScriptNameForOption($target, string $location): string
+    {
+        $url = self::getUrlForOption($target, $location);
+        if ($url === null) {
+            return '/';
+        }
+
+        return Url::getFromRoute($url);
+    }
+
+    /**
+     * Get the URL corresponding to a plain English config word
+     * in order to append in links on navigation and main panel
+     *
+     * @param string $target   a valid value for
+     *                         $cfg['NavigationTreeDefaultTabTable'],
+     *                         $cfg['NavigationTreeDefaultTabTable2'],
+     *                         $cfg['DefaultTabTable'], $cfg['DefaultTabDatabase'] or
+     *                         $cfg['DefaultTabServer']
+     * @param string $location one out of 'server', 'table', 'database'
+     *
+     * @return string The URL corresponding to the config word or null if nothing was found
+     */
+    public static function getUrlForOption($target, string $location): ?string
     {
         if ($location === 'server') {
             // Values for $cfg['DefaultTabServer']
             switch ($target) {
                 case 'welcome':
-                    return Url::getFromRoute('/');
+                    return '/';
                 case 'databases':
-                    return Url::getFromRoute('/server/databases');
+                    return '/server/databases';
                 case 'status':
-                    return Url::getFromRoute('/server/status');
+                    return '/server/status';
                 case 'variables':
-                    return Url::getFromRoute('/server/variables');
+                    return '/server/variables';
                 case 'privileges':
-                    return Url::getFromRoute('/server/privileges');
+                    return '/server/privileges';
             }
         } elseif ($location === 'database') {
             // Values for $cfg['DefaultTabDatabase']
             switch ($target) {
                 case 'structure':
-                    return Url::getFromRoute('/database/structure');
+                    return '/database/structure';
                 case 'sql':
-                    return Url::getFromRoute('/database/sql');
+                    return '/database/sql';
                 case 'search':
-                    return Url::getFromRoute('/database/search');
+                    return '/database/search';
                 case 'operations':
-                    return Url::getFromRoute('/database/operations');
+                    return '/database/operations';
             }
         } elseif ($location === 'table') {
             // Values for $cfg['DefaultTabTable'],
@@ -1766,19 +1792,19 @@ class Util
             // $cfg['NavigationTreeDefaultTabTable2']
             switch ($target) {
                 case 'structure':
-                    return Url::getFromRoute('/table/structure');
+                    return '/table/structure';
                 case 'sql':
-                    return Url::getFromRoute('/table/sql');
+                    return '/table/sql';
                 case 'search':
-                    return Url::getFromRoute('/table/search');
+                    return '/table/search';
                 case 'insert':
-                    return Url::getFromRoute('/table/change');
+                    return '/table/change';
                 case 'browse':
-                    return Url::getFromRoute('/sql');
+                    return '/sql';
             }
         }
 
-        return $target;
+        return null;
     }
 
     /**

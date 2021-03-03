@@ -294,12 +294,12 @@ class ZoomSearchController extends AbstractController
             DatabaseInterface::CONNECT_USER,
             DatabaseInterface::QUERY_STORE
         );
-        $fields_meta = $this->dbi->getFieldsMeta($result);
+        $fields_meta = $this->dbi->getFieldsMeta($result) ?? [];
         while ($row = $this->dbi->fetchAssoc($result)) {
             // for bit fields we need to convert them to printable form
             $i = 0;
             foreach ($row as $col => $val) {
-                if ($fields_meta[$i]->type === 'bit') {
+                if ($fields_meta[$i]->isMappedTypeBit) {
                     $row[$col] = Util::printableBitValue(
                         (int) $val,
                         (int) $fields_meta[$i]->length
@@ -363,7 +363,7 @@ class ZoomSearchController extends AbstractController
             DatabaseInterface::CONNECT_USER,
             DatabaseInterface::QUERY_STORE
         );
-        $fields_meta = $this->dbi->getFieldsMeta($result);
+        $fields_meta = $this->dbi->getFieldsMeta($result) ?? [];
         $data = [];
         while ($row = $this->dbi->fetchAssoc($result)) {
             //Need a row with indexes as 0,1,2 for the getUniqueCondition
@@ -468,8 +468,8 @@ class ZoomSearchController extends AbstractController
                             . 'data-max="' . $minMaxValues[1] . '"';
         }
 
-        $htmlAttributes .= ' onchange="return '
-                        . 'verifyAfterSearchFieldChange(' . $column_index . ', \'#zoom_search_form\')"';
+        $htmlAttributes .= ' onfocus="return '
+                        . 'verifyAfterSearchFieldChange(' . $search_index . ', \'#zoom_search_form\')"';
 
         $value = $this->template->render('table/search/input_box', [
             'str' => '',

@@ -28,7 +28,6 @@ use function session_start;
 use function session_write_close;
 use function sprintf;
 use function str_replace;
-use function stripos;
 use function strlen;
 use function strpos;
 use function ucwords;
@@ -1068,7 +1067,6 @@ class Sql
      * @param int            $num_rows             number of rows
      * @param DisplayResults $displayResultsObject DisplayResult instance
      * @param array|null     $extra_data           extra data
-     * @param string         $themeImagePath       uri of the theme image
      * @param array|null     $profiling_results    profiling results
      * @param object         $result               executed query results
      * @param string         $sql_query            sql query
@@ -1084,7 +1082,6 @@ class Sql
         $num_rows,
         $displayResultsObject,
         ?array $extra_data,
-        $themeImagePath,
         ?array $profiling_results,
         $result,
         $sql_query,
@@ -1146,7 +1143,6 @@ class Sql
 
         $sqlQueryResultsTable = $this->getHtmlForSqlQueryResultsTable(
             $displayResultsObject,
-            $themeImagePath,
             $displayParts,
             false,
             0,
@@ -1208,10 +1204,12 @@ class Sql
     private function getResponseForGridEdit($result): void
     {
         $row = $this->dbi->fetchRow($result);
-        $field_flags = $this->dbi->fieldFlags($result, 0);
-        if (stripos($field_flags, DisplayResults::BINARY_FIELD) !== false) {
+        $fieldsMeta = $this->dbi->getFieldsMeta($result);
+
+        if ($fieldsMeta !== null && isset($fieldsMeta[0]) && $fieldsMeta[0]->isBinary()) {
             $row[0] = bin2hex($row[0]);
         }
+
         $response = Response::getInstance();
         $response->addJSON('value', $row[0]);
     }
@@ -1238,7 +1236,6 @@ class Sql
      * Function to get html for the sql query results table
      *
      * @param DisplayResults   $displayResultsObject instance of DisplayResult
-     * @param string           $themeImagePath       theme image uri
      * @param array            $displayParts         the parts to display
      * @param bool             $editable             whether the result table is
      *                                               editable or not
@@ -1253,7 +1250,6 @@ class Sql
      */
     private function getHtmlForSqlQueryResultsTable(
         $displayResultsObject,
-        $themeImagePath,
         array $displayParts,
         $editable,
         $unlim_num_rows,
@@ -1275,12 +1271,8 @@ class Sql
                 $num_rows = $this->dbi->numRows($result);
 
                 if ($result !== false && $num_rows > 0) {
-                    $fields_meta = $this->dbi->getFieldsMeta($result);
-                    if (! is_array($fields_meta)) {
-                        $fields_cnt = 0;
-                    } else {
-                        $fields_cnt  = count($fields_meta);
-                    }
+                    $fields_meta = $this->dbi->getFieldsMeta($result) ?? [];
+                    $fields_cnt  = count($fields_meta);
 
                     $displayResultsObject->setProperties(
                         $num_rows,
@@ -1292,7 +1284,6 @@ class Sql
                         $num_rows,
                         $fields_cnt,
                         $GLOBALS['querytime'],
-                        $themeImagePath,
                         $GLOBALS['text_dir'],
                         $analyzed_sql_results['is_maint'],
                         $analyzed_sql_results['is_explain'],
@@ -1326,7 +1317,7 @@ class Sql
         } else {
             $fields_meta = [];
             if (isset($result) && ! is_bool($result)) {
-                $fields_meta = $this->dbi->getFieldsMeta($result);
+                $fields_meta = $this->dbi->getFieldsMeta($result) ?? [];
             }
             $fields_cnt = count($fields_meta);
             $_SESSION['is_multi_query'] = false;
@@ -1340,7 +1331,6 @@ class Sql
                 $num_rows,
                 $fields_cnt,
                 $GLOBALS['querytime'],
-                $themeImagePath,
                 $GLOBALS['text_dir'],
                 $analyzed_sql_results['is_maint'],
                 $analyzed_sql_results['is_explain'],
@@ -1445,7 +1435,6 @@ class Sql
      * @param string              $table                current table
      * @param array|null          $sql_data             sql data
      * @param DisplayResults      $displayResultsObject Instance of DisplayResults
-     * @param string              $themeImagePath       uri of the theme image
      * @param int                 $unlim_num_rows       unlimited number of rows
      * @param int                 $num_rows             number of rows
      * @param string|null         $disp_query           display query
@@ -1463,7 +1452,6 @@ class Sql
         $table,
         ?array $sql_data,
         $displayResultsObject,
-        $themeImagePath,
         $unlim_num_rows,
         $num_rows,
         ?string $disp_query,
@@ -1483,7 +1471,7 @@ class Sql
 
         // Gets the list of fields properties
         if (isset($result) && $result) {
-            $fields_meta = $this->dbi->getFieldsMeta($result);
+            $fields_meta = $this->dbi->getFieldsMeta($result) ?? [];
         } else {
             $fields_meta = [];
         }
@@ -1602,7 +1590,6 @@ class Sql
 
         $tableHtml = $this->getHtmlForSqlQueryResultsTable(
             $displayResultsObject,
-            $themeImagePath,
             $displayParts,
             $editable,
             $unlim_num_rows,
@@ -1655,7 +1642,6 @@ class Sql
      * @param string|null         $message_to_show        message to show
      * @param array|null          $sql_data               sql data
      * @param string              $goto                   goto page url
-     * @param string              $themeImagePath         uri of the PMA theme image
      * @param string|null         $disp_query             display query
      * @param Message|string|null $disp_message           display message
      * @param string              $sql_query              sql query
@@ -1672,7 +1658,6 @@ class Sql
         $message_to_show,
         $sql_data,
         $goto,
-        $themeImagePath,
         $disp_query,
         $disp_message,
         $sql_query,
@@ -1702,7 +1687,6 @@ class Sql
             $message_to_show, // message_to_show
             $sql_data, // sql_data
             $goto, // goto
-            $themeImagePath,
             $disp_query, // disp_query
             $disp_message, // disp_message
             $sql_query, // sql_query
@@ -1723,7 +1707,6 @@ class Sql
      * @param string|null         $message_to_show        message to show
      * @param array|null          $sql_data               sql data
      * @param string              $goto                   goto page url
-     * @param string              $themeImagePath         uri of the PMA theme image
      * @param string|null         $disp_query             display query
      * @param Message|string|null $disp_message           display message
      * @param string              $sql_query              sql query
@@ -1742,7 +1725,6 @@ class Sql
         ?string $message_to_show,
         $sql_data,
         $goto,
-        $themeImagePath,
         ?string $disp_query,
         $disp_message,
         $sql_query,
@@ -1823,7 +1805,6 @@ class Sql
                 $num_rows,
                 $displayResultsObject,
                 $extra_data,
-                $themeImagePath,
                 $profiling_results,
                 $result ?? null,
                 $sql_query,
@@ -1838,7 +1819,6 @@ class Sql
                 $table,
                 $sql_data ?? null,
                 $displayResultsObject,
-                $themeImagePath,
                 $unlim_num_rows,
                 $num_rows,
                 $disp_query ?? null,

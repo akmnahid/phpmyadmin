@@ -6,6 +6,7 @@ namespace PhpMyAdmin\Tests;
 
 use PhpMyAdmin\Core;
 use PhpMyAdmin\DatabaseInterface;
+use PhpMyAdmin\FieldMetadata;
 use PhpMyAdmin\MoTranslator\Loader;
 use PhpMyAdmin\SqlParser\Context;
 use PhpMyAdmin\SqlParser\Token;
@@ -24,6 +25,12 @@ use function str_repeat;
 use function str_replace;
 use function strlen;
 use function trim;
+use const MYSQLI_TYPE_STRING;
+use const MYSQLI_TYPE_SHORT;
+use const MYSQLI_NUM_FLAG;
+use const MYSQLI_TYPE_BIT;
+use const MYSQLI_TYPE_GEOMETRY;
+use const MYSQLI_TYPE_LONG;
 
 class UtilTest extends AbstractTestCase
 {
@@ -101,11 +108,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     null,// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -120,11 +123,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     null,// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     'CONCAT(`table`.`orgname`)',// condition
@@ -139,11 +138,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     123456,// row
-                    ((object) [
-                        'numeric' => true,
-                        'type' => 'int',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_SHORT, MYSQLI_NUM_FLAG, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -158,11 +153,9 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     123.456,// row
-                    ((object) [
-                        'numeric' => true,
-                        'type' => 'float',
-                    ]),// field meta
-                    '',// field flags
+                    // This was MYSQLI_TYPE_FLOAT but failed the condition
+                    // Probably that the test case was wrong
+                    new FieldMetadata(MYSQLI_TYPE_LONG, MYSQLI_NUM_FLAG, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -177,11 +170,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     'value',// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -196,11 +185,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     'value',// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    'BINARY',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) ['charsetnr' => 63]),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -215,11 +200,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     'value',// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    'BINARY',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) ['charsetnr' => 63]),// field meta
                     1,// fields count
                     '',// condition key
                     '',// condition
@@ -234,11 +215,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     str_repeat('*', 1001),// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    'BINARY',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) ['charsetnr' => 63]),// field meta
                     1,// fields count
                     'conditionKey',// condition key
                     'conditionInit',// condition
@@ -253,11 +230,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     str_repeat('*', 1001),// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'string',
-                    ]),// field meta
-                    'BINARY',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_STRING, 0, (object) ['charsetnr' => 63]),// field meta
                     0,// fields count
                     'conditionKey',// condition key
                     'conditionInit',// condition
@@ -272,12 +245,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     0x1,// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'bit',
-                        'length' => 4,
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_BIT, 0, (object) ['length' => 4]),// field meta
                     0,// fields count
                     'conditionKey',// condition key
                     '',// condition
@@ -292,11 +260,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     'blooobbb',// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'multipoint',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_GEOMETRY, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -311,11 +275,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     'blooobbb',// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'multipoint',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_GEOMETRY, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '`table`.`tbl2`',// condition
@@ -330,11 +290,7 @@ class UtilTest extends AbstractTestCase
                 'getConditionValue',
                 [
                     str_repeat('*', 5001),// row
-                    ((object) [
-                        'numeric' => false,
-                        'type' => 'multipoint',
-                    ]),// field meta
-                    '',// field flags
+                    new FieldMetadata(MYSQLI_TYPE_GEOMETRY, 0, (object) []),// field meta
                     0,// fields count
                     '',// condition key
                     '',// condition
@@ -371,6 +327,12 @@ class UtilTest extends AbstractTestCase
         $this->assertStringContainsString(
             '<select class="pageselector ajax" name="pma" >',
             Util::pageselector('pma', 3)
+        );
+
+        // If pageNow > nbTotalPage, show the pageNow number to avoid confusion
+        $this->assertStringContainsString(
+            '<option selected="selected" style="font-weight: bold" value="297">100</option>',
+            Util::pageselector('pma', 3, 100, 50)
         );
     }
 
@@ -2271,6 +2233,119 @@ class UtilTest extends AbstractTestCase
             (string) hex2bin('000000000101000000000000000000F03F000000000000F03F'),
             $SRIDOption
         ));
+
+        $GLOBALS['dbi'] = $oldDbi;
+    }
+
+    /**
+     * @return array[]
+     */
+    public function providerFkChecks(): array
+    {
+        return [
+            [
+                '',
+                'OFF',
+            ],
+            [
+                '0',
+                'OFF',
+            ],
+            [
+                '1',
+                'ON',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider providerFkChecks
+     */
+    public function testHandleDisableFKCheckInit(string $fkChecksValue, string $setVariableParam): void
+    {
+        $oldDbi = $GLOBALS['dbi'];
+        $dbi = $this->getMockBuilder(DatabaseInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $GLOBALS['dbi'] = $dbi;
+
+        $_REQUEST['fk_checks'] = $fkChecksValue;
+
+        $dbi->expects($this->once())
+            ->method('getVariable')
+            ->will($this->returnValue('ON'));
+
+        $dbi->expects($this->once())
+            ->method('setVariable')
+            ->with('FOREIGN_KEY_CHECKS', $setVariableParam)
+            ->will($this->returnValue(true));
+
+        $this->assertTrue(Util::handleDisableFKCheckInit());
+
+        $GLOBALS['dbi'] = $oldDbi;
+    }
+
+    /**
+     * @dataProvider providerFkChecks
+     */
+    public function testHandleDisableFKCheckInitVarFalse(string $fkChecksValue, string $setVariableParam): void
+    {
+        $oldDbi = $GLOBALS['dbi'];
+        $dbi = $this->getMockBuilder(DatabaseInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $GLOBALS['dbi'] = $dbi;
+
+        $_REQUEST['fk_checks'] = $fkChecksValue;
+
+        $dbi->expects($this->once())
+            ->method('getVariable')
+            ->will($this->returnValue('OFF'));
+
+        $dbi->expects($this->once())
+            ->method('setVariable')
+            ->with('FOREIGN_KEY_CHECKS', $setVariableParam)
+            ->will($this->returnValue(true));
+
+        $this->assertFalse(Util::handleDisableFKCheckInit());
+
+        $GLOBALS['dbi'] = $oldDbi;
+    }
+
+    /**
+     * @return array[]
+     */
+    public function providerFkCheckCleanup(): array
+    {
+        return [
+            [
+                true,
+                'ON',
+            ],
+            [
+                false,
+                'OFF',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider providerFkCheckCleanup
+     */
+    public function testHandleDisableFKCheckCleanup(bool $fkChecksValue, string $setVariableParam): void
+    {
+        $oldDbi = $GLOBALS['dbi'];
+        $dbi = $this->getMockBuilder(DatabaseInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $GLOBALS['dbi'] = $dbi;
+
+        $dbi->expects($this->once())
+            ->method('setVariable')
+            ->with('FOREIGN_KEY_CHECKS', $setVariableParam)
+            ->will($this->returnValue(true));
+
+        Util::handleDisableFKCheckCleanup($fkChecksValue);
 
         $GLOBALS['dbi'] = $oldDbi;
     }

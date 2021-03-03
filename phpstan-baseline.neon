@@ -256,11 +256,6 @@ parameters:
 			path: libraries/classes/Controllers/Table/SearchController.php
 
 		-
-			message: "#^Parameter \\#1 \\$selected of method PhpMyAdmin\\\\Controllers\\\\Table\\\\StructureController\\:\\:displayHtmlForColumnChange\\(\\) expects array, null given\\.$#"
-			count: 1
-			path: libraries/classes/Controllers/Table/StructureController.php
-
-		-
 			message: "#^Parameter \\#1 \\$content of method PhpMyAdmin\\\\Response\\:\\:addHTML\\(\\) expects string, PhpMyAdmin\\\\Message given\\.$#"
 			count: 1
 			path: libraries/classes/Controllers/Table/StructureController.php
@@ -621,11 +616,6 @@ parameters:
 			path: libraries/classes/File.php
 
 		-
-			message: "#^Method PhpMyAdmin\\\\File\\:\\:getHandle\\(\\) should return resource but returns resource\\|null\\.$#"
-			count: 1
-			path: libraries/classes/File.php
-
-		-
 			message: "#^Property PhpMyAdmin\\\\File\\:\\:\\$handle \\(resource\\|null\\) does not accept resource\\|false\\.$#"
 			count: 4
 			path: libraries/classes/File.php
@@ -659,11 +649,6 @@ parameters:
 			message: "#^Method PhpMyAdmin\\\\File\\:\\:getCompression\\(\\) should return string but returns string\\|false\\.$#"
 			count: 1
 			path: libraries/classes/File.php
-
-		-
-			message: "#^Offset 0 does not exist on array\\|null\\.$#"
-			count: 2
-			path: libraries/classes/Font.php
 
 		-
 			message: "#^Argument of an invalid type array\\|object supplied for foreach, only iterables are supported\\.$#"
@@ -1001,6 +986,11 @@ parameters:
 			path: libraries/classes/InsertEdit.php
 
 		-
+			message: "#^Cannot call method getScripts\\(\\) on class\\-string\\|object\\.$#"
+			count: 1
+			path: libraries/classes/InsertEdit.php
+
+		-
 			message: "#^Parameter \\#2 \\$ipToTest of method PhpMyAdmin\\\\IpAllowDeny\\:\\:ipMaskTest\\(\\) expects string, string\\|true given\\.$#"
 			count: 1
 			path: libraries/classes/IpAllowDeny.php
@@ -1037,6 +1027,11 @@ parameters:
 
 		-
 			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: libraries/classes/Navigation/Nodes/Node.php
+
+		-
+			message: "#^Method PhpMyAdmin\\\\Navigation\\\\Nodes\\\\Node\\:\\:getPresence\\(\\) should return int but returns int\\|string\\.$#"
 			count: 1
 			path: libraries/classes/Navigation/Nodes/Node.php
 
@@ -1266,11 +1261,6 @@ parameters:
 			path: libraries/classes/Plugins/Import/ImportShp.php
 
 		-
-			message: "#^Else branch is unreachable because ternary operator condition is always true\\.$#"
-			count: 1
-			path: libraries/classes/Plugins/Import/ImportShp.php
-
-		-
 			message: "#^Call to an undefined method PhpMyAdmin\\\\Gis\\\\GisMultiLineString\\|PhpMyAdmin\\\\Gis\\\\GisMultiPoint\\|PhpMyAdmin\\\\Gis\\\\GisPoint\\|PhpMyAdmin\\\\Gis\\\\GisPolygon\\:\\:getShape\\(\\)\\.$#"
 			count: 1
 			path: libraries/classes/Plugins/Import/ImportShp.php
@@ -1303,11 +1293,6 @@ parameters:
 		-
 			message: "#^Offset 'charset' does not exist on SimpleXMLElement\\|null\\.$#"
 			count: 1
-			path: libraries/classes/Plugins/Import/ImportXml.php
-
-		-
-			message: "#^Strict comparison using \\=\\=\\= between string and null will always evaluate to false\\.$#"
-			count: 2
 			path: libraries/classes/Plugins/Import/ImportXml.php
 
 		-
@@ -1787,7 +1772,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$table of method PhpMyAdmin\\\\Plugins\\\\Schema\\\\Svg\\\\SvgRelationSchema\\:\\:setMinMax\\(\\) expects PhpMyAdmin\\\\Plugins\\\\Schema\\\\Svg\\\\TableStatsSvg, PhpMyAdmin\\\\Plugins\\\\Schema\\\\Dia\\\\TableStatsDia\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Eps\\\\TableStatsEps\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Pdf\\\\TableStatsPdf\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Svg\\\\TableStatsSvg given\\.$#"
-			count: 3
+			count: 1
 			path: libraries/classes/Plugins/Schema/Svg/SvgRelationSchema.php
 
 		-
@@ -1839,11 +1824,6 @@ parameters:
 			message: "#^Call to an undefined method PhpMyAdmin\\\\Plugins\\\\Schema\\\\Dia\\\\Dia\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Eps\\\\Eps\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Pdf\\\\Pdf\\|PhpMyAdmin\\\\Plugins\\\\Schema\\\\Svg\\\\Svg\\:\\:printElement\\(\\)\\.$#"
 			count: 4
 			path: libraries/classes/Plugins/Schema/Svg/TableStatsSvg.php
-
-		-
-			message: "#^Cannot access property \\$type on stdClass\\|null\\.$#"
-			count: 1
-			path: libraries/classes/Plugins/Transformations/Abs/DateFormatTransformationsPlugin.php
 
 		-
 			message: "#^Binary operation \"\\-\\=\" between int\\<0, max\\>\\|string\\|false and int results in an error\\.$#"
@@ -2071,12 +2051,12 @@ parameters:
 			path: libraries/classes/Sql.php
 
 		-
-			message: "#^Parameter \\#15 \\$showtable of method PhpMyAdmin\\\\Display\\\\Results\\:\\:setProperties\\(\\) expects array, bool given\\.$#"
+			message: "#^Parameter \\#14 \\$showtable of method PhpMyAdmin\\\\Display\\\\Results\\:\\:setProperties\\(\\) expects array, bool given\\.$#"
 			count: 2
 			path: libraries/classes/Sql.php
 
 		-
-			message: "#^Parameter \\#16 \\$printview of method PhpMyAdmin\\\\Display\\\\Results\\:\\:setProperties\\(\\) expects string, string\\|null given\\.$#"
+			message: "#^Parameter \\#15 \\$printview of method PhpMyAdmin\\\\Display\\\\Results\\:\\:setProperties\\(\\) expects string, string\\|null given\\.$#"
 			count: 2
 			path: libraries/classes/Sql.php
 
@@ -2211,14 +2191,14 @@ parameters:
 			path: libraries/classes/Transformations.php
 
 		-
-			message: "#^Parameter \\#1 \\$node of method Twig\\\\Compiler\\:\\:subcompile\\(\\) expects Twig\\\\Node\\\\Node, Twig\\\\Node\\\\Node\\|null given\\.$#"
-			count: 3
-			path: libraries/classes/Twig/I18n/NodeTrans.php
-
-		-
 			message: "#^Parameter \\#1 \\$stack of function array_push expects array, array\\<int, string\\>\\|string given\\.$#"
 			count: 1
 			path: libraries/classes/Types.php
+
+		-
+			message: "#^Offset 'header' does not exist on array\\('proxy' \\=\\> string, 'request_fulluri' \\=\\> true\\)\\.$#"
+			count: 1
+			path: libraries/classes/Utils/HttpRequest.php
 
 		-
 			message: "#^Variable \\$http_response_header in isset\\(\\) always exists and is not nullable\\.$#"
@@ -2382,7 +2362,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#8 \\$default_value of static method PhpMyAdmin\\\\Table\\:\\:generateFieldSpec\\(\\) expects string, int given\\.$#"
-			count: 14
+			count: 7
 			path: test/classes/TableTest.php
 
 		-

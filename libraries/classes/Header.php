@@ -165,8 +165,9 @@ class Header
         $this->scripts->addFile('vendor/sprintf.js');
         $this->scripts->addFile('ajax.js');
         $this->scripts->addFile('keyhandler.js');
-        $this->scripts->addFile('vendor/bootstrap/bootstrap.bundle.min.js');
         $this->scripts->addFile('vendor/jquery/jquery-ui.min.js');
+        $this->scripts->addFile('name-conflict-fixes.js');
+        $this->scripts->addFile('vendor/bootstrap/bootstrap.bundle.min.js');
         $this->scripts->addFile('vendor/js.cookie.js');
         $this->scripts->addFile('vendor/jquery/jquery.mousewheel.js');
         $this->scripts->addFile('vendor/jquery/jquery.event.drag-2.2.js');
@@ -703,14 +704,13 @@ class Header
 
     private function getVariablesForJavaScript(): string
     {
-        global $cfg, $PMA_Theme;
+        global $cfg;
 
         $maxInputVars = ini_get('max_input_vars');
         $maxInputVarsValue = $maxInputVars === false || $maxInputVars === '' ? 'false' : (int) $maxInputVars;
 
         return $this->template->render('javascript/variables', [
             'first_day_of_calendar' => $cfg['FirstDayOfCalendar'],
-            'theme_image_path' => $PMA_Theme instanceof Theme ? $PMA_Theme->getImgPath() : '',
             'max_input_vars' => $maxInputVarsValue,
         ]);
     }

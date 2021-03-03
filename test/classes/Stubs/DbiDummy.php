@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace PhpMyAdmin\Tests\Stubs;
 
 use PhpMyAdmin\Dbal\DbiExtension;
+use PhpMyAdmin\FieldMetadata;
+
 use function addslashes;
 use function count;
 use function is_array;
@@ -347,9 +349,9 @@ class DbiDummy implements DbiExtension
      *
      * @param object $result result set identifier
      *
-     * @return array meta info for fields in $result
+     * @return FieldMetadata[]|null meta info for fields in $result
      */
-    public function getFieldsMeta($result)
+    public function getFieldsMeta($result): ?array
     {
         return [];
     }
@@ -393,19 +395,6 @@ class DbiDummy implements DbiExtension
      * @return string name of $i. field in $result
      */
     public function fieldName($result, $i)
-    {
-        return '';
-    }
-
-    /**
-     * returns concatenated string of human readable field flags
-     *
-     * @param object $result result set identifier
-     * @param int    $i      field
-     *
-     * @return string field flags
-     */
-    public function fieldFlags($result, $i)
     {
         return '';
     }
@@ -2116,6 +2105,137 @@ class DbiDummy implements DbiExtension
                         'index1_Orig_log_pos',
                         'index1_End_log_pos',
                         'index1_Server_id',
+                    ],
+                ],
+            ],
+            [
+                'query' => 'SHOW FULL COLUMNS FROM `testdb`.`mytable` LIKE \'\_id\'',
+                'columns' => ['Field', 'Type', 'Collation', 'Null', 'Key', 'Default', 'Extra', 'Privileges', 'Comment'],
+                'result' => [
+                    [
+                        '_id',
+                        'tinyint(4)',
+                        null,
+                        'NO',
+                        '',
+                        null,
+                        '',
+                        'select,insert,update,references',
+                        '',
+                    ],
+                ],
+            ],
+            [
+                'query' => 'SHOW FULL COLUMNS FROM `testdb`.`mytable`',
+                'columns' => ['Field', 'Type', 'Collation', 'Null', 'Key', 'Default', 'Extra', 'Privileges', 'Comment'],
+                'result' => [
+                    [
+                        'aid',
+                        'tinyint(4)',
+                        null,
+                        'NO',
+                        'PRI',
+                        null,
+                        '',
+                        'select,insert,update,references',
+                        '',
+                    ],
+                    [
+                        '_id',
+                        'tinyint(4)',
+                        null,
+                        'NO',
+                        '',
+                        null,
+                        '',
+                        'select,insert,update,references',
+                        '',
+                    ],
+                ],
+            ],
+            [
+                'query'  => 'SHOW INDEXES FROM `testdb`.`mytable`',
+                'result' => [],
+            ],
+            [
+                'query' => 'SHOW CREATE TABLE `testdb`.`mytable`',
+                'columns' => ['Table', 'Create Table'],
+                'result' => [
+                    [
+                        'test',
+                        'CREATE TABLE `test` ('
+                        . '    `aid` tinyint(4) NOT NULL,'
+                        . '    `_id` tinyint(4) NOT NULL,'
+                        . '    PRIMARY KEY (`aid`)'
+                        . ') ENGINE=InnoDB DEFAULT CHARSET=latin1',
+                    ],
+                ],
+            ],
+            [
+                'query' => 'SELECT * FROM `testdb`.`mytable` LIMIT 1',
+                'columns' => ['aid', '_id'],
+                'result' => [
+                    [
+                        1,
+                        1,
+                    ],
+                ],
+            ],
+            [
+                'query'   => 'SHOW COLUMNS FROM `test_db`.`test_table`',
+                'columns' => [
+                    'Field',
+                    'Type',
+                    'Null',
+                    'Key',
+                    'Default',
+                    'Extra',
+                ],
+                'result'  => [
+                    [
+                        'id',
+                        'int(11)',
+                        'NO',
+                        'PRI',
+                        'NULL',
+                        'auto_increment',
+                    ],
+                    [
+                        'name',
+                        'varchar(20)',
+                        'NO',
+                        '',
+                        'NULL',
+                        '',
+                    ],
+                    [
+                        'datetimefield',
+                        'datetime',
+                        'NO',
+                        '',
+                        'NULL',
+                        '',
+                    ],
+                ],
+            ],
+            [
+                'query' => 'SELECT * FROM `test_db`.`test_table`;',
+                'columns' => ['id', 'name', 'datetimefield'],
+                'result' => [
+                    [
+                        '1',
+                        'abcd',
+                        '2011-01-20 02:00:02',
+                    ],
+                    [
+                        '2',
+                        'foo',
+                        '2011-01-20 02:00:02',
+                    ],
+                    [
+                        '3',
+                        'Abcd',
+                        '2011-01-20 02:00:02',
                     ],
                 ],
             ],

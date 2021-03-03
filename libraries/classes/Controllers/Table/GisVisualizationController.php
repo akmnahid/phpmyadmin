@@ -39,7 +39,7 @@ final class GisVisualizationController extends AbstractController
 
     public function index(): void
     {
-        global $cfg, $url_params, $PMA_Theme, $db, $err_url;
+        global $cfg, $url_params, $db, $err_url;
 
         Util::checkParameters(['db']);
 
@@ -73,13 +73,13 @@ final class GisVisualizationController extends AbstractController
         // Execute the query and return the result
         $result = $this->dbi->tryQuery($sqlQuery);
         // Get the meta data of results
-        $meta = $this->dbi->getFieldsMeta($result);
+        $meta = $this->dbi->getFieldsMeta($result) ?? [];
 
         // Find the candidate fields for label column and spatial column
         $labelCandidates = [];
         $spatialCandidates = [];
         foreach ($meta as $column_meta) {
-            if ($column_meta->type === 'geometry') {
+            if ($column_meta->isMappedTypeGeometry) {
                 $spatialCandidates[] = $column_meta->name;
             } else {
                 $labelCandidates[] = $column_meta->name;
@@ -183,7 +183,6 @@ final class GisVisualizationController extends AbstractController
             'sql_query' => $sqlQuery,
             'visualization' => $this->visualization->toImage('svg'),
             'draw_ol' => $this->visualization->asOl(),
-            'theme_image_path' => $PMA_Theme->getImgPath(),
         ]);
 
         $this->response->addHTML($html);

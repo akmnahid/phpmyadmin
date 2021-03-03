@@ -36,7 +36,7 @@
       {% trans 'There are no events to display.' %}
     </div>
 
-    <table class="table table-light table-striped table-hover{{ items is empty ? ' hide' }} data">
+    <table id="eventsTable" class="table table-light table-striped table-hover{{ items is empty ? ' hide' }} data">
       <thead class="table-light">
       <tr>
         <th></th>
@@ -114,7 +114,7 @@
         <div class="wrapper toggleAjax hide">
           <div class="toggleButton">
             <div title="{% trans 'Click to toggle' %}" class="toggle-container {{ scheduler_state ? 'on' : 'off' }}">
-              <img src="{{ theme_image_path }}toggle-{{ text_dir }}.png">
+              <img src="{{ image('toggle-' ~ text_dir ~ '.png') }}">
               <table class="pma-table nospacing nopadding">
                 <tbody>
                 <tr>
