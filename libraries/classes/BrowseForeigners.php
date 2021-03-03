@@ -1,68 +1,62 @@
 <?php
-/* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * Contains functions used by browse_foreigners.php
- *
- * @package PhpMyAdmin
+ * Contains functions used by browse foreigners
  */
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin;
 
+use function asort;
+use function ceil;
+use function floor;
+use function htmlspecialchars;
+use function is_array;
+use function mb_strlen;
+use function mb_substr;
+
 /**
  * PhpMyAdmin\BrowseForeigners class
- *
- * @package PhpMyAdmin
  */
 class BrowseForeigners
 {
+    /** @var int */
     private $limitChars;
+    /** @var int */
     private $maxRows;
+    /** @var int */
     private $repeatCells;
+    /** @var bool */
     private $showAll;
-    private $themeImage;
 
-    /**
-     * @var Template
-     */
+    /** @var Template */
     public $template;
 
     /**
-     * Constructor
-     *
-     * @param int      $limitChars  Maximum number of characters to show
-     * @param int      $maxRows     Number of rows to display
-     * @param int      $repeatCells Repeat the headers every X cells, or 0 to deactivate
-     * @param boolean  $showAll     Shows the 'Show all' button or not
-     * @param string   $themeImage  Theme image path
-     * @param Template $template    Template object
+     * @param Template $template Template object
      */
-    public function __construct(
-        int $limitChars,
-        int $maxRows,
-        int $repeatCells,
-        bool $showAll,
-        string $themeImage,
-        Template $template
-    ) {
-        $this->limitChars = $limitChars;
-        $this->maxRows = $maxRows;
-        $this->repeatCells = $repeatCells;
-        $this->showAll = $showAll;
-        $this->themeImage = $themeImage;
+    public function __construct(Template $template)
+    {
+        global $cfg;
+
         $this->template = $template;
+
+        $this->limitChars = (int) $cfg['LimitChars'];
+        $this->maxRows = (int) $cfg['MaxRows'];
+        $this->repeatCells = (int) $cfg['RepeatCells'];
+        $this->showAll = (bool) $cfg['ShowAll'];
     }
 
     /**
      * Function to get html for one relational key
      *
-     * @param integer $horizontal_count   the current horizontal count
-     * @param string  $header             table header
-     * @param array   $keys               all the keys
-     * @param integer $indexByKeyname     index by keyname
-     * @param array   $descriptions       descriptions
-     * @param integer $indexByDescription index by description
-     * @param string  $current_value      current value on the edit form
+     * @param int    $horizontal_count   the current horizontal count
+     * @param string $header             table header
+     * @param array  $keys               all the keys
+     * @param int    $indexByKeyname     index by keyname
+     * @param array  $descriptions       descriptions
+     * @param int    $indexByDescription index by description
+     * @param string $current_value      current value on the edit form
      *
      * @return array the generated html
      */
@@ -75,6 +69,8 @@ class BrowseForeigners
         int $indexByDescription,
         string $current_value
     ): array {
+        global $PMA_Theme;
+
         $horizontal_count++;
         $output = '';
 
@@ -90,18 +86,18 @@ class BrowseForeigners
         // key names and descriptions for the left section,
         // sorted by key names
         $leftKeyname = $keys[$indexByKeyname];
-        list(
+        [
             $leftDescription,
-            $leftDescriptionTitle
-        ) = $this->getDescriptionAndTitle($descriptions[$indexByKeyname]);
+            $leftDescriptionTitle,
+        ] = $this->getDescriptionAndTitle($descriptions[$indexByKeyname]);
 
         // key names and descriptions for the right section,
         // sorted by descriptions
         $rightKeyname = $keys[$indexByDescription];
-        list(
+        [
             $rightDescription,
-            $rightDescriptionTitle
-        ) = $this->getDescriptionAndTitle($descriptions[$indexByDescription]);
+            $rightDescriptionTitle,
+        ] = $this->getDescriptionAndTitle($descriptions[$indexByDescription]);
 
         $indexByDescription++;
 
@@ -127,9 +123,9 @@ class BrowseForeigners
             'nowrap' => false,
         ]);
 
-        $output .= '<td width="20%">'
-            . '<img src="' . $this->themeImage . 'spacer.png" alt=""'
-            . ' width="1" height="1"></td>';
+        $output .= '<td width="20%"><img src="'
+            . ($PMA_Theme instanceof Theme ? $PMA_Theme->getImgPath('spacer.png') : '')
+            . '" alt="" width="1" height="1"></td>';
 
         $output .= $this->template->render('table/browse_foreigners/column_element', [
             'keyname' => $rightKeyname,
@@ -164,8 +160,6 @@ class BrowseForeigners
      * @param array       $foreignData   foreign column data
      * @param string|null $fieldkey      field key
      * @param string      $current_value current columns's value
-     *
-     * @return string
      */
     public function getHtmlForRelationalFieldSelection(
         string $db,
@@ -183,9 +177,9 @@ class BrowseForeigners
         ]);
 
         $output = '<form class="ajax" '
-            . 'id="browse_foreign_form" name="browse_foreign_from" '
-            . 'action="browse_foreigners.php" method="post">'
-            . '<fieldset>'
+            . 'id="browse_foreign_form" name="browse_foreign_from" action="'
+            . Url::getFromRoute('/browse-foreigners')
+            . '" method="post"><fieldset class="pma-fieldset">'
             . Url::getHiddenInputs($db, $table)
             . '<input type="hidden" name="field" value="' . htmlspecialchars($field)
             . '">'
@@ -213,13 +207,11 @@ class BrowseForeigners
             . '</fieldset>'
             . '</form>';
 
-        $output .= '<table width="100%" id="browse_foreign_table">';
+        $output .= '<table class="pma-table" width="100%" id="browse_foreign_table">';
 
         if (! is_array($foreignData['disp_row'])) {
-            $output .= '</tbody>'
+            return $output . '</tbody>'
                 . '</table>';
-
-            return $output;
         }
 
         $header = '<tr>
@@ -252,11 +244,11 @@ class BrowseForeigners
         $indexByDescription = 0;
 
         foreach ($keys as $indexByKeyname => $value) {
-            list(
+            [
                 $html,
                 $horizontal_count,
-                $indexByDescription
-            ) = $this->getHtmlForOneKey(
+                $indexByDescription,
+            ] = $this->getHtmlForOneKey(
                 $horizontal_count,
                 $header,
                 $keys,
@@ -301,6 +293,7 @@ class BrowseForeigners
                 . '...'
             );
         }
+
         return [
             $description,
             $descriptionTitle,
@@ -311,8 +304,6 @@ class BrowseForeigners
      * Function to get html for the goto page option
      *
      * @param array|null $foreignData foreign data
-     *
-     * @return string
      */
     private function getHtmlForGotoPage(?array $foreignData): string
     {
@@ -322,8 +313,8 @@ class BrowseForeigners
             return $gotopage;
         }
 
-        $pageNow = @floor($pos / $this->maxRows) + 1;
-        $nbTotalPage = @ceil($foreignData['the_total'] / $this->maxRows);
+        $pageNow = (int) floor($pos / $this->maxRows) + 1;
+        $nbTotalPage = (int) ceil($foreignData['the_total'] / $this->maxRows);
 
         if ($foreignData['the_total'] > $this->maxRows) {
             $gotopage = Util::pageselector(
@@ -347,8 +338,6 @@ class BrowseForeigners
      * Function to get foreign limit
      *
      * @param string|null $foreignShowAll foreign navigation
-     *
-     * @return string
      */
     public function getForeignLimit(?string $foreignShowAll): ?string
     {
@@ -356,6 +345,7 @@ class BrowseForeigners
             return null;
         }
         isset($_POST['pos']) ? $pos = $_POST['pos'] : $pos = 0;
+
         return 'LIMIT ' . $pos . ', ' . $this->maxRows . ' ';
     }
 }

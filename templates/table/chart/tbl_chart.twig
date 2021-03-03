@@ -1,11 +1,8 @@
-<script type="text/javascript">
-    url_query = '{{ url_query }}';
-</script>
 {# Display Chart options #}
 <div id="div_view_options">
-    <form method="post" id="tblchartform" action="tbl_chart.php" class="ajax">
+    <form method="post" id="tblchartform" action="{{ url('/table/chart') }}" class="ajax">
         {{ get_hidden_inputs(url_params) }}
-        <fieldset>
+        <fieldset class="pma-fieldset">
             <legend>
                 {% trans 'Display chart' %}
             </legend>
@@ -72,7 +69,7 @@
                 </label>
                 <select name="chartSeries" id="select_chartSeries" multiple="multiple">
                     {% for idx, key in keys %}
-                        {% if fields_meta[idx].type in numeric_types %}
+                        {% if fields_meta[idx].isNumericType() %}
                             {% if idx == xaxis and numeric_column_count > 1 %}
                                 <option value="{{ idx }}">{{ key }}</option>
                             {% else %}
@@ -82,15 +79,14 @@
                     {% endfor %}
                 </select>
                 <input type="hidden" name="dateTimeCols" value="
-                    {% set date_time_types = ['date', 'datetime', 'timestamp'] %}
                     {% for idx, key in keys %}
-                        {% if fields_meta[idx].type in date_time_types %}
+                        {% if fields_meta[idx].isDateTimeType() %}
                             {{ idx ~ ' ' }}
                         {% endif %}
                     {% endfor %}">
                 <input type="hidden" name="numericCols" value="
                     {% for idx, key in keys %}
-                        {% if fields_meta[idx].type in numeric_types %}
+                        {% if fields_meta[idx].isNumericType() %}
                             {{ idx ~ ' ' }}
                         {% endif %}
                     {% endfor %}">

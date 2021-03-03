@@ -10,10 +10,6 @@
   display: none;
 }
 
-.nowrap {
-  white-space: nowrap;
-}
-
 .hide {
   display: none;
 }
@@ -68,16 +64,6 @@ thead th {
   font-weight: bold;
   background-color: #e5e5e5;
   border: 0.1em solid #000;
-}
-
-th.vtop,
-td.vtop {
-  vertical-align: top;
-}
-
-th.vbottom,
-td.vbottom {
-  vertical-align: bottom;
 }
 
 th {
@@ -146,13 +132,11 @@ table {
 }
 
 // For hiding 'Open a New phpMyAdmin Window' button
-// Hide extra menu on tbl_structure.php
+// Hide extra menu on /table/structure
 .ic_window-new,
 .ic_s_cog,
-.sticky_columns tr,
 #structure-action-links,
 #addColumns,
-#topmenu2,
 .cDrop,
 .cEdit,
 .cList,
