@@ -23,7 +23,6 @@ class TableTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         parent::loadDefaultConfig();
 
         /**
@@ -1283,6 +1282,27 @@ class TableTest extends AbstractTestCase
         $error = false;
 
         $_POST['old_index'] = 'PRIMARY';
+
+        $table = new Table($table, $db);
+        $sql = $table->getSqlQueryForIndexCreateOrEdit($index, $error);
+
+        $this->assertEquals(
+            'ALTER TABLE `pma_db`.`pma_table` DROP PRIMARY KEY, ADD UNIQUE ;',
+            $sql
+        );
+    }
+
+    /**
+     * Tests for getSqlQueryForIndexCreateOrEdit() method.
+     */
+    public function testGetSqlQueryForIndexCreateOrEditSecondFormat(): void
+    {
+        $db = 'pma_db';
+        $table = 'pma_table';
+        $index = new Index();
+        $error = false;
+
+        $_POST['old_index']['Key_name'] = 'PRIMARY';
 
         $table = new Table($table, $db);
         $sql = $table->getSqlQueryForIndexCreateOrEdit($index, $error);

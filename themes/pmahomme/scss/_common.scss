@@ -710,15 +710,6 @@ div#modalOverlay {
   z-index: 900;
 }
 
-div#userPermissionModal {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 0;
-  z-index: 1000;
-}
-
 form.login {
   input {
     &[type=text],
@@ -2161,7 +2152,7 @@ input#auto_increment_opt {
 }
 
 .cDrop {
-  left: 0;
+  right: 0;
   position: absolute;
   top: 0;
 }
@@ -2170,9 +2161,7 @@ input#auto_increment_opt {
   background: url("../img/col_drop.png");
   cursor: pointer;
   height: 16px;
-  margin-left: 0.3em;
   margin-top: 0.3em;
-  position: absolute;
   width: 16px;
 
   &:hover {
@@ -2189,6 +2178,8 @@ input#auto_increment_opt {
   border: solid 1px #999;
   position: absolute;
   box-shadow: 0 0.2em 0.5em #333;
+  margin-left: 75%;
+  right: 0;
 
   .lDiv div {
     padding: 0.2em 0.5em 0.2em;
@@ -2318,7 +2309,7 @@ input#auto_increment_opt {
   .edit_box {
     overflow-x: hidden;
     overflow-y: scroll;
-    padding: 0;
+    padding: 3px;
     margin: 0;
   }
 

@@ -10,7 +10,6 @@
 /* global Stickyfill */
 /* global isStorageSupported */ // js/config.js
 /* global codeMirrorEditor */ // js/functions.js
-/* global MicroHistory */ // js/microhistory.js
 /* global makeGrid */ // js/makegrid.js
 /* global sqlBoxLocked */ // js/functions.js
 
@@ -215,7 +214,7 @@ AJAX.registerTeardown('sql.js', function () {
     $('body').off('click', '#simulate_dml');
     $('body').off('keyup', '#sqlqueryform');
     $('body').off('click', 'form[name="resultsForm"].ajax button[name="submit_mult"], form[name="resultsForm"].ajax input[name="submit_mult"]');
-    $(document).off('submit', '#maxRowsForm');
+    $(document).off('submit', '.maxRowsForm');
     $(document).off('click', '#view_as');
 });
 
@@ -360,7 +359,7 @@ AJAX.registerOnload('sql.js', function () {
         textArea.value = '';
 
         $('#server-breadcrumb a').each(function () {
-            textArea.value += $(this).text().split(':')[1].trim() + '/';
+            textArea.value += $(this).data('raw-text') + '/';
         });
         textArea.value += '\t\t' + window.location.href;
         textArea.value += '\n';
@@ -591,21 +590,12 @@ AJAX.registerOnload('sql.js', function () {
                 Functions.highlightSql($sqlqueryresultsouter);
 
                 if (data.menu) {
-                    if (history && history.pushState) {
-                        history.replaceState({
-                            menu : data.menu
-                        },
-                        null
-                        );
-                        AJAX.handleMenu.replace(data.menu);
-                    } else {
-                        MicroHistory.menus.replace(data.menu);
-                        MicroHistory.menus.add(data.menuHash, data.menu);
-                    }
-                } else if (data.menuHash) {
-                    if (! (history && history.pushState)) {
-                        MicroHistory.menus.replace(MicroHistory.menus.get(data.menuHash));
-                    }
+                    history.replaceState({
+                        menu : data.menu
+                    },
+                    null
+                    );
+                    AJAX.handleMenu.replace(data.menu);
                 }
 
                 if (data.params) {
@@ -850,7 +840,7 @@ AJAX.registerOnload('sql.js', function () {
         $.post(url, submitData, AJAX.responseHandler);
     });
 
-    $(document).on('submit', '#maxRowsForm', function () {
+    $(document).on('submit', '.maxRowsForm', function () {
         var unlimNumRows = $(this).find('input[name="unlim_num_rows"]').val();
 
         var maxRowsCheck = Functions.checkFormElementInRange(

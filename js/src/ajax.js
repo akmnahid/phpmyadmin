@@ -1,7 +1,3 @@
-
-/* global ErrorReport */ // js/error_report.js
-/* global MicroHistory */ // js/microhistory.js
-
 /**
  * This object handles ajax requests for pages. It also
  * handles the reloading of the main menu and scripts.
@@ -28,7 +24,7 @@ var AJAX = {
     // eslint-disable-next-line valid-jsdoc
     /**
      * @var {Function} callback Callback to execute after a successful request
-     *                          Used by PMA_commonFunctions from common.js
+     *                          Used by CommonActions from common.js
      */
     callback: function () {},
     /**
@@ -309,10 +305,6 @@ var AJAX = {
             params += argsep + dataPost;
             isLink = false;
         }
-        if (! (history && history.pushState)) {
-            // Add a list of menu hashes that we have in the cache to the request
-            params += MicroHistory.menus.getRequestParam();
-        }
 
         if (AJAX.debug) {
             // eslint-disable-next-line no-console
@@ -324,17 +316,15 @@ var AJAX = {
             AJAX.$msgbox = Functions.ajaxShowMessage();
             // Save reference for the new link request
             AJAX.xhr = $.get(url, params, AJAX.responseHandler);
-            if (history && history.pushState) {
-                var state = {
-                    url : href
-                };
-                if (previousLinkAborted) {
-                    // hack: there is already an aborted entry on stack
-                    // so just modify the aborted one
-                    history.replaceState(state, null, href);
-                } else {
-                    history.pushState(state, null, href);
-                }
+            var state = {
+                url : href
+            };
+            if (previousLinkAborted) {
+                // hack: there is already an aborted entry on stack
+                // so just modify the aborted one
+                history.replaceState(state, null, href);
+            } else {
+                history.pushState(state, null, href);
             }
         } else {
             /**
@@ -495,21 +485,12 @@ var AJAX = {
                     $('title').replaceWith(data.title);
                 }
                 if (data.menu) {
-                    if (history && history.pushState) {
-                        var state = {
-                            url : data.selflink,
-                            menu : data.menu
-                        };
-                        history.replaceState(state, null);
-                        AJAX.handleMenu.replace(data.menu);
-                    } else {
-                        MicroHistory.menus.replace(data.menu);
-                        MicroHistory.menus.add(data.menuHash, data.menu);
-                    }
-                } else if (data.menuHash) {
-                    if (! (history && history.pushState)) {
-                        MicroHistory.menus.replace(MicroHistory.menus.get(data.menuHash));
-                    }
+                    var state = {
+                        url : data.selflink,
+                        menu : data.menu
+                    };
+                    history.replaceState(state, null);
+                    AJAX.handleMenu.replace(data.menu);
                 }
                 if (data.disableNaviSettings) {
                     Navigation.disableSettings();
@@ -559,17 +540,6 @@ var AJAX = {
                 }
                 if (data.scripts) {
                     AJAX.scriptHandler.load(data.scripts);
-                }
-                if (data.selflink && data.scripts && data.menuHash && data.params) {
-                    if (! (history && history.pushState)) {
-                        MicroHistory.add(
-                            data.selflink,
-                            data.scripts,
-                            data.menuHash,
-                            data.params,
-                            AJAX.source.attr('rel')
-                        );
-                    }
                 }
                 if (data.displayMessage) {
                     $('#page_content').prepend(data.displayMessage);
@@ -699,10 +669,10 @@ var AJAX = {
             // Clear loaded scripts if they are from another version of phpMyAdmin.
             // Depends on common params being set before loading scripts in responseHandler
             if (self.scriptsVersion === null) {
-                self.scriptsVersion = CommonParams.get('PMA_VERSION');
-            } else if (self.scriptsVersion !== CommonParams.get('PMA_VERSION')) {
+                self.scriptsVersion = CommonParams.get('version');
+            } else if (self.scriptsVersion !== CommonParams.get('version')) {
                 self.scripts = [];
-                self.scriptsVersion = CommonParams.get('PMA_VERSION');
+                self.scriptsVersion = CommonParams.get('version');
             }
             self.scriptsCompleted = false;
             self.scriptsToBeFired = [];
@@ -738,9 +708,6 @@ var AJAX = {
          * @return {void}
          */
         done: function (script, callback) {
-            if (typeof ErrorReport !== 'undefined') {
-                ErrorReport.wrapGlobalFunctions();
-            }
             if ($.inArray(script, this.scriptsToBeFired)) {
                 AJAX.fireOnload(script);
             }
@@ -772,7 +739,7 @@ var AJAX = {
 
             script.type = 'text/javascript';
             var file = name.indexOf('vendor/') !== -1 ? name : 'dist/' + name;
-            script.src = 'js/' + file + '?' + 'v=' + encodeURIComponent(CommonParams.get('PMA_VERSION'));
+            script.src = 'js/' + file + '?' + 'v=' + encodeURIComponent(CommonParams.get('version'));
             script.async = false;
             script.onload = function () {
                 self.done(name, callback);
@@ -798,9 +765,6 @@ var AJAX = {
              */
             $(document).off('click', 'a').on('click', 'a', AJAX.requestHandler);
             $(document).off('submit', 'form').on('submit', 'form', AJAX.requestHandler);
-            if (! (history && history.pushState)) {
-                MicroHistory.update();
-            }
             callback();
         }
     }
@@ -878,60 +842,36 @@ $(function () {
         .append($('#server-breadcrumb').clone())
         .append($('#topmenucontainer').clone())
         .html();
-    if (history && history.pushState) {
-        // set initial state reload
-        var initState = ('state' in window.history && window.history.state !== null);
-        var initURL = $('#selflink').find('> a').attr('href') || location.href;
-        var state = {
-            url : initURL,
-            menu : menuContent
-        };
-        history.replaceState(state, null);
 
-        $(window).on('popstate', function (event) {
-            var initPop = (! initState && location.href === initURL);
-            initState = true;
-            // check if popstate fired on first page itself
-            if (initPop) {
-                return;
-            }
-            var state = event.originalEvent.state;
-            if (state && state.menu) {
-                AJAX.$msgbox = Functions.ajaxShowMessage();
-                var params = 'ajax_request=true' + CommonParams.get('arg_separator') + 'ajax_page_request=true';
-                var url = state.url || location.href;
-                $.get(url, params, AJAX.responseHandler);
-                // TODO: Check if sometimes menu is not retrieved from server,
-                // Not sure but it seems menu was missing only for printview which
-                // been removed lately, so if it's right some dead menu checks/fallbacks
-                // may need to be removed from this file and Header.php
-                // AJAX.handleMenu.replace(event.originalEvent.state.menu);
-            }
-        });
-    } else {
-        // Fallback to microhistory mechanism
-        AJAX.scriptHandler
-            .load([{ 'name' : 'microhistory.js', 'fire' : 1 }], function () {
-                // The cache primer is set by the footer class
-                if (MicroHistory.primer.url) {
-                    MicroHistory.menus.add(
-                        MicroHistory.primer.menuHash,
-                        menuContent
-                    );
-                }
-                $(function () {
-                    // Queue up this event twice to make sure that we get a copy
-                    // of the page after all other onload events have been fired
-                    if (MicroHistory.primer.url) {
-                        MicroHistory.add(
-                            MicroHistory.primer.url,
-                            MicroHistory.primer.scripts,
-                            MicroHistory.primer.menuHash
-                        );
-                    }
-                });
-            });
-    }
+    // set initial state reload
+    var initState = ('state' in window.history && window.history.state !== null);
+    var initURL = $('#selflink').find('> a').attr('href') || location.href;
+    var state = {
+        url : initURL,
+        menu : menuContent
+    };
+    history.replaceState(state, null);
+
+    $(window).on('popstate', function (event) {
+        var initPop = (! initState && location.href === initURL);
+        initState = true;
+        // check if popstate fired on first page itself
+        if (initPop) {
+            return;
+        }
+        var state = event.originalEvent.state;
+        if (state && state.menu) {
+            AJAX.$msgbox = Functions.ajaxShowMessage();
+            var params = 'ajax_request=true' + CommonParams.get('arg_separator') + 'ajax_page_request=true';
+            var url = state.url || location.href;
+            $.get(url, params, AJAX.responseHandler);
+            // TODO: Check if sometimes menu is not retrieved from server,
+            // Not sure but it seems menu was missing only for printview which
+            // been removed lately, so if it's right some dead menu checks/fallbacks
+            // may need to be removed from this file and Header.php
+            // AJAX.handleMenu.replace(event.originalEvent.state.menu);
+        }
+    });
 });
 
 /**

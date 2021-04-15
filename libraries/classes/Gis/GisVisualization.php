@@ -11,7 +11,7 @@ use PhpMyAdmin\Core;
 use PhpMyAdmin\Sanitize;
 use PhpMyAdmin\Util;
 use TCPDF;
-use const PNG_ALL_FILTERS;
+
 use function array_merge;
 use function base64_encode;
 use function count;
@@ -22,12 +22,15 @@ use function imagefilledrectangle;
 use function imagepng;
 use function intval;
 use function is_numeric;
+use function is_string;
 use function mb_strlen;
 use function mb_strpos;
 use function mb_strtolower;
 use function mb_substr;
 use function ob_get_clean;
 use function ob_start;
+
+use const PNG_ALL_FILTERS;
 
 /**
  * Handles visualization of GIS data
@@ -222,6 +225,7 @@ class GisVisualization
             )
             . ', ';
         }
+
         // Wrap the spatial column with 'ST_ASTEXT()' function and add it
         $modified_query .= $spatialAsText . '('
             . Util::backquote($this->userSpecifiedSettings['spatialColumn'])
@@ -623,16 +627,22 @@ class GisVisualization
         foreach ($data as $row) {
             // Figure out the data type
             $ref_data = $row[$this->settings['spatialColumn']];
+            if (! is_string($ref_data)) {
+                continue;
+            }
+
             $type_pos = mb_strpos($ref_data, '(');
             if ($type_pos === false) {
                 continue;
             }
+
             $type = mb_substr($ref_data, 0, $type_pos);
 
             $gis_obj = GisFactory::factory($type);
             if (! $gis_obj) {
                 continue;
             }
+
             $scale_data = $gis_obj->scaleRow(
                 $row[$this->settings['spatialColumn']]
             );
@@ -719,12 +729,14 @@ class GisVisualization
             if ($type_pos === false) {
                 continue;
             }
+
             $type = mb_substr($ref_data, 0, $type_pos);
 
             $gis_obj = GisFactory::factory($type);
             if (! $gis_obj) {
                 continue;
             }
+
             $label = '';
             if (isset($this->settings['labelColumn'], $row[$this->settings['labelColumn']])) {
                 $label = $row[$this->settings['labelColumn']];
@@ -762,6 +774,7 @@ class GisVisualization
                     $scale_data
                 );
             }
+
             $color_number++;
         }
 

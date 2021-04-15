@@ -19,9 +19,8 @@ class CollationsControllerTest extends AbstractTestCase
         parent::setUp();
         $GLOBALS['text_dir'] = 'ltr';
         parent::setGlobalConfig();
-        parent::defineVersionConstants();
         parent::setTheme();
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
 
         $GLOBALS['server'] = 1;
         $GLOBALS['db'] = 'db';
@@ -40,7 +39,7 @@ class CollationsControllerTest extends AbstractTestCase
         $actual = $response->getHTMLResult();
 
         $this->assertStringContainsString(
-            '<table class="table table-light table-striped table-hover table-sm">',
+            '<table class="table table-light table-striped table-hover table-sm w-auto">',
             $actual
         );
         $this->assertStringContainsString(

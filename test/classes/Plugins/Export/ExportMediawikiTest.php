@@ -15,6 +15,7 @@ use PhpMyAdmin\Properties\Plugins\ExportPluginProperties;
 use PhpMyAdmin\Tests\AbstractTestCase;
 use ReflectionMethod;
 use ReflectionProperty;
+
 use function array_shift;
 use function ob_get_clean;
 use function ob_start;
@@ -33,7 +34,6 @@ class ExportMediawikiTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         parent::loadDefaultConfig();
         $GLOBALS['server'] = 0;
         $GLOBALS['output_kanji_conversion'] = false;
@@ -326,7 +326,7 @@ class ExportMediawikiTest extends AbstractTestCase
                 'test_db',
                 'test_table',
                 "\n",
-                'example.com',
+                'localhost',
                 'SELECT * FROM `test_db`.`test_table`;'
             )
         );
@@ -351,11 +351,11 @@ class ExportMediawikiTest extends AbstractTestCase
             "|-\n" .
             " | 2\n" .
             " | foo\n" .
-            " | 2011-01-20 02:00:02\n" .
+            " | 2010-01-20 02:00:02\n" .
             "|-\n" .
             " | 3\n" .
             " | Abcd\n" .
-            " | 2011-01-20 02:00:02\n" .
+            " | 2012-01-20 02:00:02\n" .
             "|}\n\n",
             $result
         );

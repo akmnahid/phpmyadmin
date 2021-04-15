@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PhpMyAdmin;
 
 use PhpMyAdmin\Html\MySQLDocumentation;
-use const E_USER_ERROR;
+
 use function closedir;
 use function count;
 use function explode;
@@ -18,6 +18,8 @@ use function strtolower;
 use function trigger_error;
 use function uasort;
 use function ucfirst;
+
+use const E_USER_ERROR;
 
 /**
  * Language selection manager
@@ -757,7 +759,8 @@ class LanguageManager
             $path = LOCALE_PATH
                 . '/' . $file
                 . '/LC_MESSAGES/phpmyadmin.mo';
-            if ($file === '.'
+            if (
+                $file === '.'
                 || $file === '..'
                 || ! @file_exists($path)
             ) {
@@ -766,6 +769,7 @@ class LanguageManager
 
             $result[] = $file;
         }
+
         /* Close the handle */
         closedir($handle);
 
@@ -780,11 +784,11 @@ class LanguageManager
     public function availableLocales()
     {
         if (! $this->availableLocales) {
-            if (! isset($GLOBALS['PMA_Config']) || empty($GLOBALS['PMA_Config']->get('FilterLanguages'))) {
+            if (! isset($GLOBALS['config']) || empty($GLOBALS['config']->get('FilterLanguages'))) {
                 $this->availableLocales = $this->listLocaleDir();
             } else {
                 $this->availableLocales = preg_grep(
-                    '@' . $GLOBALS['PMA_Config']->get('FilterLanguages') . '@',
+                    '@' . $GLOBALS['config']->get('FilterLanguages') . '@',
                     $this->listLocaleDir()
                 );
             }
@@ -892,11 +896,12 @@ class LanguageManager
     public function selectLanguage()
     {
         // check forced language
-        if (! empty($GLOBALS['PMA_Config']->get('Lang'))) {
-            $lang = $this->getLanguage($GLOBALS['PMA_Config']->get('Lang'));
+        if (! empty($GLOBALS['config']->get('Lang'))) {
+            $lang = $this->getLanguage($GLOBALS['config']->get('Lang'));
             if ($lang !== false) {
                 return $lang;
             }
+
             $this->langFailedConfig = true;
         }
 
@@ -907,6 +912,7 @@ class LanguageManager
             if ($lang !== false) {
                 return $lang;
             }
+
             $this->langFailedRequest = true;
         }
 
@@ -916,15 +922,17 @@ class LanguageManager
             if ($lang !== false) {
                 return $lang;
             }
+
             $this->langFailedRequest = true;
         }
 
         // check previous set language
-        if (! empty($GLOBALS['PMA_Config']->getCookie('pma_lang'))) {
-            $lang = $this->getLanguage($GLOBALS['PMA_Config']->getCookie('pma_lang'));
+        if (! empty($GLOBALS['config']->getCookie('pma_lang'))) {
+            $lang = $this->getLanguage($GLOBALS['config']->getCookie('pma_lang'));
             if ($lang !== false) {
                 return $lang;
             }
+
             $this->langFailedCookie = true;
         }
 
@@ -953,8 +961,8 @@ class LanguageManager
         }
 
         // Didn't catch any valid lang : we use the default settings
-        if (isset($langs[$GLOBALS['PMA_Config']->get('DefaultLang')])) {
-            return $langs[$GLOBALS['PMA_Config']->get('DefaultLang')];
+        if (isset($langs[$GLOBALS['config']->get('DefaultLang')])) {
+            return $langs[$GLOBALS['config']->get('DefaultLang')];
         }
 
         // Fallback to English
@@ -970,7 +978,8 @@ class LanguageManager
     public function showWarnings()
     {
         // now, that we have loaded the language strings we can send the errors
-        if (! $this->langFailedConfig
+        if (
+            ! $this->langFailedConfig
             && ! $this->langFailedCookie
             && ! $this->langFailedRequest
         ) {

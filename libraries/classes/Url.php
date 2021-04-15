@@ -42,7 +42,7 @@ class Url
         $indent = 0,
         $skip = []
     ) {
-        global $PMA_Config;
+        global $config;
 
         if (is_array($db)) {
             $params  =& $db;
@@ -51,17 +51,20 @@ class Url
             if (strlen((string) $db) > 0) {
                 $params['db'] = $db;
             }
+
             if (strlen((string) $table) > 0) {
                 $params['table'] = $table;
             }
         }
 
-        if (! empty($GLOBALS['server'])
+        if (
+            ! empty($GLOBALS['server'])
             && $GLOBALS['server'] != $GLOBALS['cfg']['ServerDefault']
         ) {
             $params['server'] = $GLOBALS['server'];
         }
-        if (empty($PMA_Config->getCookie('pma_lang')) && ! empty($GLOBALS['lang'])) {
+
+        if (empty($config->getCookie('pma_lang')) && ! empty($GLOBALS['lang'])) {
             $params['lang'] = $GLOBALS['lang'];
         }
 
@@ -210,22 +213,23 @@ class Url
      */
     public static function getCommonRaw($params = [], $divider = '?')
     {
-        global $PMA_Config;
+        global $config;
 
         $separator = self::getArgSeparator();
 
         // avoid overwriting when creating navigation panel links to servers
-        if (isset($GLOBALS['server'])
+        if (
+            isset($GLOBALS['server'])
             && $GLOBALS['server'] != $GLOBALS['cfg']['ServerDefault']
             && ! isset($params['server'])
-            && ! $PMA_Config->get('is_setup')
+            && ! $config->get('is_setup')
         ) {
             $params['server'] = $GLOBALS['server'];
         }
 
         // Can be null when the user is missing an extension.
         // See: Core::checkExtensions()
-        if ($PMA_Config !== null && empty($PMA_Config->getCookie('pma_lang')) && ! empty($GLOBALS['lang'])) {
+        if ($config !== null && empty($config->getCookie('pma_lang')) && ! empty($GLOBALS['lang'])) {
             $params['lang'] = $GLOBALS['lang'];
         }
 
@@ -269,12 +273,14 @@ class Url
             } else {
                 $separator = '&';
             }
+
             $html_separator = htmlentities($separator);
         }
 
         switch ($encode) {
             case 'html':
                 return $html_separator;
+
             case 'text':
             case 'none':
             default:

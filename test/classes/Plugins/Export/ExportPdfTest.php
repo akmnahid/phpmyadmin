@@ -14,6 +14,7 @@ use PhpMyAdmin\Properties\Plugins\ExportPluginProperties;
 use PhpMyAdmin\Tests\AbstractTestCase;
 use ReflectionMethod;
 use ReflectionProperty;
+
 use function array_shift;
 
 /**
@@ -30,7 +31,6 @@ class ExportPdfTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         $GLOBALS['server'] = 0;
         $GLOBALS['output_kanji_conversion'] = false;
         $GLOBALS['output_charset_conversion'] = false;

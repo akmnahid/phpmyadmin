@@ -144,6 +144,8 @@ class ExportTest extends TestBase
 
         if ($type === 'server') {
             $this->scrollIntoView('databases_and_tables', 200);
+            sleep(1);
+            $this->scrollIntoView('databases_and_tables', 200);
             $this->byPartialLinkText('Unselect all')->click();
 
             $this->byCssSelector('option[value="' . $this->databaseName . '"]')->click();
@@ -170,6 +172,8 @@ class ExportTest extends TestBase
             }
 
             $this->scrollIntoView('checkbox_sql_if_not_exists');
+            sleep(1);
+            $this->scrollIntoView('checkbox_sql_if_not_exists');
             $ele = $this->byId('checkbox_sql_if_not_exists');
             if (! $ele->isSelected()) {
                 $this->byCssSelector('label[for=checkbox_sql_if_not_exists]')->click();
@@ -182,6 +186,8 @@ class ExportTest extends TestBase
 
         $this->byId('buttonGo')->click();
         $this->waitAjax();
+
+        sleep(1);
 
         return $this->waitForElement('id', 'textSQLDUMP')->getText();
     }

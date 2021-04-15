@@ -18,7 +18,9 @@ use PhpMyAdmin\Tests\AbstractTestCase;
 use PhpMyAdmin\Tests\Stubs\Response as ResponseStub;
 use PhpMyAdmin\Types;
 use stdClass;
+
 use function hash;
+
 use const MYSQLI_TYPE_LONG;
 
 /**
@@ -40,7 +42,6 @@ class SearchControllerTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         parent::loadDefaultConfig();
         parent::setTheme();
 

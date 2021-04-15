@@ -8,6 +8,7 @@ use PhpMyAdmin\DatabaseInterface;
 use PhpMyAdmin\ErrorHandler;
 use PhpMyAdmin\Plugins\Auth\AuthenticationConfig;
 use PhpMyAdmin\Tests\AbstractTestCase;
+
 use function ob_get_clean;
 use function ob_start;
 
@@ -25,7 +26,7 @@ class AuthenticationConfigTest extends AbstractTestCase
         parent::setLanguage();
         parent::setGlobalConfig();
         parent::setTheme();
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
         $GLOBALS['server'] = 0;
         $GLOBALS['db'] = 'db';
         $GLOBALS['table'] = 'table';
@@ -71,7 +72,7 @@ class AuthenticationConfigTest extends AbstractTestCase
 
     public function testAuthFails(): void
     {
-        $GLOBALS['error_handler'] = new ErrorHandler();
+        $GLOBALS['errorHandler'] = new ErrorHandler();
         $GLOBALS['cfg']['Servers'] = [1];
         $GLOBALS['allowDeny_forbidden'] = false;
 

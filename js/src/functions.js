@@ -5,7 +5,6 @@
 /* global mysqlDocBuiltin, mysqlDocKeyword */ // js/doclinks.js
 /* global Indexes */ // js/indexes.js
 /* global firstDayOfCalendar, maxInputVars, mysqlDocTemplate, themeImagePath */ // templates/javascript/variables.twig
-/* global MicroHistory */ // js/microhistory.js
 /* global sprintf */ // js/vendor/sprintf.js
 /* global zxcvbn */ // js/vendor/zxcvbn.js
 
@@ -2944,9 +2943,6 @@ AJAX.registerOnload('functions.js', function () {
                         // Redirect to table structure page on creation of new table
                         var argsep = CommonParams.get('arg_separator');
                         var params12 = 'ajax_request=true' + argsep + 'ajax_page_request=true';
-                        if (! (history && history.pushState)) {
-                            params12 += MicroHistory.menus.getRequestParam();
-                        }
                         var tableStructureUrl = 'index.php?route=/table/structure' + argsep + 'server=' + data.params.server +
                             argsep + 'db=' + data.params.db + argsep + 'token=' + data.params.token +
                             argsep + 'goto=' + encodeURIComponent('index.php?route=/database/structure') + argsep + 'table=' + data.params.table + '';
@@ -3288,8 +3284,7 @@ AJAX.registerOnload('functions.js', function () {
  */
 Functions.hideShowConnection = function ($engineSelector) {
     var $connection = $('.create_table_form input[name=connection]');
-    var index = $connection.parent('td').index();
-    var $labelTh = $connection.parents('tr').prev('tr').children('th').eq(index);
+    var $labelTh = $('.create_table_form #storage-engine-connection');
     if ($engineSelector.val() !== 'FEDERATED') {
         $connection
             .prop('disabled', true)
@@ -5081,7 +5076,7 @@ Functions.configSet = function (key, value) {
  * @param {boolean}    cached          Configuration type.
  * @param {Function}   successCallback The callback to call after the value is received
  *
- * @return {object}                Configuration value.
+ * @return {void}
  */
 Functions.configGet = function (key, cached, successCallback) {
     var isCached = (typeof cached !== 'undefined') ? cached : true;
@@ -5093,8 +5088,6 @@ Functions.configGet = function (key, cached, successCallback) {
     // Result not found in local storage or ignored.
     // Hitting the server.
     $.ajax({
-        // Value at false to be synchronous (then ignore the callback on success)
-        async: typeof successCallback === 'function',
         url: 'index.php?route=/config/get',
         type: 'POST',
         dataType: 'json',
@@ -5117,7 +5110,6 @@ Functions.configGet = function (key, cached, successCallback) {
             }
         }
     });
-    return JSON.parse(localStorage.getItem(key));
 };
 
 /**

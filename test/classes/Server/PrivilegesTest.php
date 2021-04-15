@@ -10,13 +10,16 @@ use PhpMyAdmin\Html\Generator;
 use PhpMyAdmin\Message;
 use PhpMyAdmin\Relation;
 use PhpMyAdmin\RelationCleanup;
+use PhpMyAdmin\Server\Plugins;
 use PhpMyAdmin\Server\Privileges;
 use PhpMyAdmin\Template;
 use PhpMyAdmin\Tests\AbstractTestCase;
 use PhpMyAdmin\Tests\Stubs\DbiDummy;
 use PhpMyAdmin\Url;
 use PhpMyAdmin\Util;
+use PhpMyAdmin\Version;
 use stdClass;
+
 use function htmlspecialchars;
 use function implode;
 
@@ -36,11 +39,10 @@ class PrivilegesTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         parent::setLanguage();
         parent::setGlobalConfig();
         parent::setTheme();
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
         $GLOBALS['cfg']['Server']['DisableIS'] = false;
         $GLOBALS['cfgRelation'] = [];
         $GLOBALS['cfgRelation']['menuswork'] = false;
@@ -55,14 +57,15 @@ class PrivilegesTest extends AbstractTestCase
             new Template(),
             $GLOBALS['dbi'],
             $relation,
-            new RelationCleanup($GLOBALS['dbi'], $relation)
+            new RelationCleanup($GLOBALS['dbi'], $relation),
+            new Plugins($GLOBALS['dbi'])
         );
 
         //$_POST
         $_POST['pred_password'] = 'none';
         //$_SESSION
         $_SESSION['relation'][$GLOBALS['server']] = [
-            'PMA_VERSION' => PMA_VERSION,
+            'version' => Version::VERSION,
             'db' => 'pmadb',
             'users' => 'users',
             'usergroups' => 'usergroups',
@@ -75,7 +78,7 @@ class PrivilegesTest extends AbstractTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $GLOBALS['PMA_Config'] = $pmaconfig;
+        $GLOBALS['config'] = $pmaconfig;
 
         //Mock DBI
         $dbi = $this->getMockBuilder(DatabaseInterface::class)
@@ -789,58 +792,19 @@ class PrivilegesTest extends AbstractTestCase
      */
     public function testGetHtmlToDisplayPrivilegesTable(): void
     {
-        $dbi_old = $GLOBALS['dbi'];
         $GLOBALS['hostname'] = 'hostname';
         $GLOBALS['username'] = 'username';
+        $GLOBALS['dbi'] = DatabaseInterface::load(new DbiDummy());
 
-        //Mock DBI
-        $dbi = $this->getMockBuilder(DatabaseInterface::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $fetchSingleRow = [
-            'password' => 'pma_password',
-            'max_questions' => 'max_questions',
-            'max_updates' => 'max_updates',
-            'max_connections' => 'max_connections',
-            'max_user_connections' => 'max_user_connections',
-            'Table_priv' => 'Select,Insert,Update,Delete,File,Create,Alter,Index,'
-                . 'Drop,Super,Process,Reload,Shutdown,Create_routine,Alter_routine,'
-                . 'Show_db,Repl_slave,Create_tmp_table,Show_view,Execute,'
-                . 'Repl_client,Lock_tables,References,Grant,dd'
-                . 'Create_user,Repl_slave,Repl_client',
-            'Type' => "'Super1','Select','Insert','Update','Create','Alter','Index',"
-                . "'Drop','Delete','File','Super','Process','Reload','Shutdown','"
-                . "Show_db','Repl_slave','Create_tmp_table',"
-                . "'Show_view','Create_routine','"
-                . "Repl_client','Lock_tables','References','Alter_routine','"
-                . "Create_user','Repl_slave','Repl_client','Execute','Grant','ddd",
-        ];
-        $dbi->expects($this->any())->method('fetchSingleRow')
-            ->will($this->returnValue($fetchSingleRow));
-
-        $dbi->expects($this->any())->method('tryQuery')
-            ->will($this->returnValue(true));
-
-        $columns = [
-            'val1',
-            'replace1',
-            5,
-        ];
-        $dbi->expects($this->at(0))
-            ->method('fetchRow')
-            ->will($this->returnValue($columns));
-        $dbi->expects($this->at(1))
-            ->method('fetchRow')
-            ->will($this->returnValue(null));
-        $dbi->expects($this->any())
-            ->method('escapeString')
-            ->will($this->returnArgument(0));
-
-        $GLOBALS['dbi'] = $dbi;
-        $this->serverPrivileges->dbi = $dbi;
-
-        $html = $this->serverPrivileges->getHtmlToDisplayPrivilegesTable();
+        $relation = new Relation($GLOBALS['dbi']);
+        $serverPrivileges = new Privileges(
+            new Template(),
+            $GLOBALS['dbi'],
+            $relation,
+            new RelationCleanup($GLOBALS['dbi'], $relation),
+            new Plugins($GLOBALS['dbi'])
+        );
+        $html = $serverPrivileges->getHtmlToDisplayPrivilegesTable();
         $GLOBALS['username'] = 'username';
 
         //validate 1: fieldset
@@ -928,7 +892,7 @@ class PrivilegesTest extends AbstractTestCase
             $html
         );
         $this->assertStringContainsString(
-            'id="text_max_updates" value="max_updates"',
+            'id="text_max_updates" value="0"',
             $html
         );
         $this->assertStringContainsString(
@@ -960,9 +924,6 @@ class PrivilegesTest extends AbstractTestCase
             'value="SPECIFIED"',
             $html
         );
-
-        $GLOBALS['dbi'] = $dbi_old;
-        $this->serverPrivileges->dbi = $dbi_old;
     }
 
     /**
@@ -1662,7 +1623,7 @@ class PrivilegesTest extends AbstractTestCase
         $_POST['old_hostname'] = 'old_hostname';
         $_POST['old_username'] = 'old_username';
         $_SESSION['relation'][1] = [
-            'PMA_VERSION' => PMA_VERSION,
+            'version' => Version::VERSION,
             'bookmarkwork' => false,
             'historywork' => false,
             'recentwork' => false,

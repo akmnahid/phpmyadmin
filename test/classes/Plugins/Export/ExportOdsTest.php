@@ -17,14 +17,16 @@ use PhpMyAdmin\Tests\AbstractTestCase;
 use ReflectionMethod;
 use ReflectionProperty;
 use stdClass;
+
 use function array_shift;
-use const MYSQLI_TYPE_TINY_BLOB;
+
+use const MYSQLI_BLOB_FLAG;
 use const MYSQLI_TYPE_DATE;
-use const MYSQLI_TYPE_TIME;
 use const MYSQLI_TYPE_DATETIME;
 use const MYSQLI_TYPE_DECIMAL;
 use const MYSQLI_TYPE_STRING;
-use const MYSQLI_BLOB_FLAG;
+use const MYSQLI_TYPE_TIME;
+use const MYSQLI_TYPE_TINY_BLOB;
 
 /**
  * @requires extension zip
@@ -41,7 +43,6 @@ class ExportOdsTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         $GLOBALS['server'] = 0;
         $GLOBALS['output_kanji_conversion'] = false;
         $GLOBALS['output_charset_conversion'] = false;

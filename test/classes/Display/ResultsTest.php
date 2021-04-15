@@ -17,17 +17,23 @@ use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Utils\Query;
 use PhpMyAdmin\Tests\AbstractTestCase;
 use PhpMyAdmin\Transformations;
+use PhpMyAdmin\Version;
 use stdClass;
+
 use function count;
+use function explode;
 use function hex2bin;
-use const MYSQLI_TYPE_TIMESTAMP;
-use const MYSQLI_TYPE_DATE;
-use const MYSQLI_TYPE_STRING;
+use function htmlspecialchars_decode;
+use function urldecode;
+
+use const MYSQLI_NOT_NULL_FLAG;
+use const MYSQLI_NUM_FLAG;
 use const MYSQLI_TYPE_BLOB;
+use const MYSQLI_TYPE_DATE;
 use const MYSQLI_TYPE_DATETIME;
 use const MYSQLI_TYPE_LONG;
-use const MYSQLI_NUM_FLAG;
-use const MYSQLI_NOT_NULL_FLAG;
+use const MYSQLI_TYPE_STRING;
+use const MYSQLI_TYPE_TIMESTAMP;
 
 /**
  * Test cases for displaying results.
@@ -46,7 +52,6 @@ class ResultsTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         parent::setLanguage();
         parent::setGlobalConfig();
         $GLOBALS['server'] = 0;
@@ -54,7 +59,7 @@ class ResultsTest extends AbstractTestCase
         $GLOBALS['table'] = 'table';
         $GLOBALS['PMA_PHP_SELF'] = 'index.php';
         $this->object = new DisplayResults('as', '', 0, '', '');
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
         $GLOBALS['text_dir'] = 'ltr';
         $GLOBALS['cfg']['Server']['DisableIS'] = false;
         $_SESSION[' HMAC_secret '] = 'test';
@@ -358,19 +363,6 @@ class ResultsTest extends AbstractTestCase
                 'index.php?route=/database/routines&item_name=area&db=data'
                 . '&item_type=PROCEDURE&server=0&lang=en',
             ],
-            [
-                'information_schema',
-                'columns',
-                'CHARACTER_SET_NAME',
-                [
-                    'table_schema' => 'information_schema',
-                    'table_name' => 'CHARACTER_SETS',
-                ],
-                'column_name',
-                'index.php?sql_query=SELECT+%60CHARACTER_SET_NAME%60+FROM+%60info'
-                . 'rmation_schema%60.%60CHARACTER_SETS%60&db=information_schema'
-                . '&test_name=value&server=0&lang=en',
-            ],
         ];
     }
 
@@ -414,21 +406,15 @@ class ResultsTest extends AbstractTestCase
                 ],
                 'columns' => [
                     'column_name' => [
-                        'link_param' => [
-                            'sql_query',
-                            'table_schema',
-                            'table_name',
-                        ],
+                        'link_param' => 'table_schema',
                         'link_dependancy_params' => [
                             0 => [
                                 'param_info' => 'db',
                                 'column_name' => 'table_schema',
                             ],
                             1 => [
-                                'param_info' => [
-                                    'test_name',
-                                    'value',
-                                ],
+                                'param_info' => 'db2',
+                                'column_name' => 'table_schema',
                             ],
                         ],
                         'default_page' => 'index.php',
@@ -437,9 +423,6 @@ class ResultsTest extends AbstractTestCase
             ],
         ];
 
-        $this->object->properties['db'] = $db;
-        $this->object->properties['table'] = $table;
-
         $this->assertEquals(
             $output,
             $this->callFunction(
@@ -447,10 +430,9 @@ class ResultsTest extends AbstractTestCase
                 DisplayResults::class,
                 'getSpecialLinkUrl',
                 [
-                    $specialSchemaLinks,
+                    $specialSchemaLinks[$db][$table][$field_name],
                     $column_value,
                     $row_info,
-                    $field_name,
                 ]
             )
         );
@@ -1092,7 +1074,7 @@ class ResultsTest extends AbstractTestCase
     {
         // Fake relation settings
         $_SESSION['tmpval']['relational_display'] = 'K';
-        $_SESSION['relation'][$GLOBALS['server']]['PMA_VERSION'] = PMA_VERSION;
+        $_SESSION['relation'][$GLOBALS['server']]['version'] = Version::VERSION;
         $_SESSION['relation'][$GLOBALS['server']]['mimework'] = true;
         $_SESSION['relation'][$GLOBALS['server']]['column_info'] = 'column_info';
         $GLOBALS['cfg']['BrowseMIME'] = true;
@@ -1180,5 +1162,125 @@ class ResultsTest extends AbstractTestCase
         );
         unset($_SESSION['tmpval']);
         unset($_SESSION['relation']);
+    }
+
+    public function dataProviderGetSortOrderHiddenInputs(): array
+    {
+        // SQL to add the column
+        // SQL to remove the column
+        // The URL params
+        // The column name
+        return [
+            [
+                '',
+                '',
+                ['sql_query' => ''],
+                'colname',
+                '',
+            ],
+            [
+                'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC, `gis_all`.`name` ASC',
+                'SELECT * FROM `gis_all` ORDER BY `gis_all`.`name` ASC',
+                ['sql_query' => 'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC, `gis_all`.`name` ASC'],
+                'shape',
+                '',
+            ],
+            [
+                'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC, `gis_all`.`name` ASC',
+                'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC',
+                ['sql_query' => 'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC, `gis_all`.`name` ASC'],
+                'name',
+                '',
+            ],
+            [
+                'SELECT * FROM `gis_all`',
+                'SELECT * FROM `gis_all`',
+                ['sql_query' => 'SELECT * FROM `gis_all`'],
+                'name',
+                '',
+            ],
+            [
+                'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`region_slug` DESC, '
+                . '`gd_cities`.`country_slug` ASC, `gd_cities`.`city_id` ASC, `gd_cities`.`city` ASC',
+                'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`region_slug` DESC, '
+                . '`gd_cities`.`country_slug` ASC, `gd_cities`.`city_id` ASC, `gd_cities`.`city` ASC',
+                [
+                    'sql_query' => 'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`region_slug` DESC, '
+                . '`gd_cities`.`country_slug` ASC, `gd_cities`.`city_id` ASC, `gd_cities`.`city` ASC',
+                ],
+                '',
+                '',
+            ],
+            [
+                'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`region_slug` DESC, '
+                . '`gd_cities`.`country_slug` ASC, `gd_cities`.`city_id` ASC, `gd_cities`.`city` ASC',
+                'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`country_slug` ASC, `gd_cities`.`city_id`'
+                . ' ASC, `gd_cities`.`city` ASC',
+                [
+                    'sql_query' => 'SELECT * FROM `gd_cities` ORDER BY `gd_cities`.`region_slug` DESC, '
+                . '`gd_cities`.`country_slug` ASC, `gd_cities`.`city_id` ASC, `gd_cities`.`city` ASC',
+                ],
+                'region_slug',
+                '',
+            ],
+            [
+                'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC',
+                'SELECT * FROM `gis_all`',
+                ['sql_query' => 'SELECT * FROM `gis_all` ORDER BY `gis_all`.`shape` DESC'],
+                'shape',
+                '&discard_remembered_sort=1',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderGetSortOrderHiddenInputs
+     */
+    public function testGetSortOrderHiddenInputs(
+        string $sqlAdd,
+        string $sqlRemove,
+        array $urlParams,
+        string $colName,
+        string $urlParamsRemove
+    ): void {
+        $output = $this->callFunction(
+            $this->object,
+            DisplayResults::class,
+            'getSortOrderHiddenInputs',
+            [
+                $urlParams,
+                $colName,
+            ]
+        );
+        $out = urldecode(htmlspecialchars_decode($output));
+        $this->assertStringContainsString(
+            'name="url-remove-order" value="index.php?route=/sql&sql_query=' . $sqlRemove,
+            $out,
+            'The remove query should be found'
+        );
+
+        $this->assertStringContainsString(
+            'name="url-add-order" value="index.php?route=/sql&sql_query=' . $sqlAdd,
+            $out,
+            'The add query should be found'
+        );
+
+        $firstLine = explode("\n", $out)[0] ?? '';
+        $this->assertStringContainsString(
+            'url-remove-order',
+            $firstLine,
+            'The first line should contain url-remove-order input'
+        );
+        $this->assertStringNotContainsString(
+            'url-add-order',
+            $firstLine,
+            'The first line should contain NOT url-add-order input'
+        );
+
+        $this->assertStringContainsString(
+            $urlParamsRemove,
+            $firstLine,
+            'The first line should contain the URL params'
+        );
     }
 }

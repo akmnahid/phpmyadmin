@@ -17,6 +17,7 @@ use PhpMyAdmin\Properties\Options\Items\BoolPropertyItem;
 use PhpMyAdmin\Properties\Options\Items\HiddenPropertyItem;
 use PhpMyAdmin\Properties\Options\Items\TextPropertyItem;
 use PhpMyAdmin\Properties\Plugins\ExportPluginProperties;
+
 use function bin2hex;
 use function date;
 use function htmlspecialchars;
@@ -159,12 +160,12 @@ class ExportOds extends ExportPlugin
     /**
      * Outputs database header
      *
-     * @param string $db       Database name
-     * @param string $db_alias Aliases of db
+     * @param string $db      Database name
+     * @param string $dbAlias Aliases of db
      *
      * @return bool Whether it succeeded
      */
-    public function exportDBHeader($db, $db_alias = '')
+    public function exportDBHeader($db, $dbAlias = '')
     {
         return true;
     }
@@ -184,13 +185,13 @@ class ExportOds extends ExportPlugin
     /**
      * Outputs CREATE DATABASE statement
      *
-     * @param string $db          Database name
-     * @param string $export_type 'server', 'database', 'table'
-     * @param string $db_alias    Aliases of db
+     * @param string $db         Database name
+     * @param string $exportType 'server', 'database', 'table'
+     * @param string $dbAlias    Aliases of db
      *
      * @return bool Whether it succeeded
      */
-    public function exportDBCreate($db, $export_type, $db_alias = '')
+    public function exportDBCreate($db, $exportType, $dbAlias = '')
     {
         return true;
     }
@@ -198,12 +199,12 @@ class ExportOds extends ExportPlugin
     /**
      * Outputs the content of a table in NHibernate format
      *
-     * @param string $db        database name
-     * @param string $table     table name
-     * @param string $crlf      the end of line sequence
-     * @param string $error_url the url to go back in case of error
-     * @param string $sql_query SQL query for obtaining data
-     * @param array  $aliases   Aliases of db/table/columns
+     * @param string $db       database name
+     * @param string $table    table name
+     * @param string $crlf     the end of line sequence
+     * @param string $errorUrl the url to go back in case of error
+     * @param string $sqlQuery SQL query for obtaining data
+     * @param array  $aliases  Aliases of db/table/columns
      *
      * @return bool Whether it succeeded
      */
@@ -211,8 +212,8 @@ class ExportOds extends ExportPlugin
         $db,
         $table,
         $crlf,
-        $error_url,
-        $sql_query,
+        $errorUrl,
+        $sqlQuery,
         array $aliases = []
     ) {
         /** @var DatabaseInterface $dbi */
@@ -223,7 +224,7 @@ class ExportOds extends ExportPlugin
         $this->initAlias($aliases, $db_alias, $table_alias);
         // Gets the data from the database
         $result = $dbi->query(
-            $sql_query,
+            $sqlQuery,
             DatabaseInterface::CONNECT_USER,
             DatabaseInterface::QUERY_UNBUFFERED
         );
@@ -242,6 +243,7 @@ class ExportOds extends ExportPlugin
                 if (! empty($aliases[$db]['tables'][$table]['columns'][$col_as])) {
                     $col_as = $aliases[$db]['tables'][$table]['columns'][$col_as];
                 }
+
                 $GLOBALS['ods_buffer']
                     .= '<table:table-cell office:value-type="string">'
                     . '<text:p>'
@@ -251,6 +253,7 @@ class ExportOds extends ExportPlugin
                     . '</text:p>'
                     . '</table:table-cell>';
             }
+
             $GLOBALS['ods_buffer'] .= '</table:table-row>';
         }
 
@@ -262,6 +265,7 @@ class ExportOds extends ExportPlugin
                     // export GIS types as hex
                     $row[$j] = '0x' . bin2hex($row[$j]);
                 }
+
                 if (! isset($row[$j]) || $row[$j] === null) {
                     $GLOBALS['ods_buffer']
                         .= '<table:table-cell office:value-type="string">'
@@ -269,7 +273,8 @@ class ExportOds extends ExportPlugin
                         . htmlspecialchars($GLOBALS[$what . '_null'])
                         . '</text:p>'
                         . '</table:table-cell>';
-                } elseif ($fields_meta[$j]->isBinary
+                } elseif (
+                    $fields_meta[$j]->isBinary
                     && $fields_meta[$j]->isBlob
                 ) {
                     // ignore BLOB
@@ -307,7 +312,8 @@ class ExportOds extends ExportPlugin
                         . htmlspecialchars($row[$j])
                         . '</text:p>'
                         . '</table:table-cell>';
-                } elseif (($fields_meta[$j]->isNumeric
+                } elseif (
+                    ($fields_meta[$j]->isNumeric
                     && ! $fields_meta[$j]->isMappedTypeTimestamp
                     && ! $fields_meta[$j]->isBlob)
                     || $fields_meta[$j]->isType(FieldMetadata::TYPE_REAL)
@@ -328,8 +334,10 @@ class ExportOds extends ExportPlugin
                         . '</table:table-cell>';
                 }
             }
+
             $GLOBALS['ods_buffer'] .= '</table:table-row>';
         }
+
         $dbi->freeResult($result);
 
         $GLOBALS['ods_buffer'] .= '</table:table>';
@@ -340,14 +348,14 @@ class ExportOds extends ExportPlugin
     /**
      * Outputs result raw query in ODS format
      *
-     * @param string $err_url   the url to go back in case of error
-     * @param string $sql_query the rawquery to output
-     * @param string $crlf      the end of line sequence
+     * @param string $errorUrl the url to go back in case of error
+     * @param string $sqlQuery the rawquery to output
+     * @param string $crlf     the end of line sequence
      *
      * @return bool if succeeded
      */
-    public function exportRawQuery(string $err_url, string $sql_query, string $crlf): bool
+    public function exportRawQuery(string $errorUrl, string $sqlQuery, string $crlf): bool
     {
-        return $this->exportData('', '', $crlf, $err_url, $sql_query);
+        return $this->exportData('', '', $crlf, $errorUrl, $sqlQuery);
     }
 }

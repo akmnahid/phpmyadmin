@@ -19,11 +19,10 @@ class BinlogControllerTest extends AbstractTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        parent::defineVersionConstants();
         $GLOBALS['text_dir'] = 'ltr';
         parent::setGlobalConfig();
         parent::setTheme();
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
 
         $GLOBALS['cfg']['MaxRows'] = 10;
         $GLOBALS['cfg']['ServerDefault'] = 'server';

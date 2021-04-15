@@ -28,11 +28,13 @@ use PhpMyAdmin\Plugins\Transformations\Text_Plain_PreApPend;
 use PhpMyAdmin\Plugins\Transformations\Text_Plain_Substring;
 use PhpMyAdmin\Tests\AbstractTestCase;
 use ReflectionMethod;
+
 use function date_default_timezone_set;
 use function function_exists;
 use function method_exists;
-use const MYSQLI_TYPE_TINY;
+
 use const MYSQLI_TYPE_STRING;
+use const MYSQLI_TYPE_TINY;
 
 /**
  * Tests for different input/output transformation plugins
@@ -59,7 +61,7 @@ class TransformationPluginsTest extends AbstractTestCase
 
         // For Image_*_Inline plugin
         parent::setGlobalConfig();
-        $GLOBALS['PMA_Config']->enableBc();
+        $GLOBALS['config']->enableBc();
         $GLOBALS['Server'] = 1;
 
         // For Date Format plugin
@@ -1031,6 +1033,98 @@ class TransformationPluginsTest extends AbstractTestCase
                     ],
                 ],
                 'suffixMA_suffix',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [
+                        '1',
+                        '3',
+                        'suffix',
+                    ],
+                ],
+                'suffixMA_suffix',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    ['2'],
+                ],
+                '…A_BUFFER',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [2],
+                ],
+                '…A_BUFFER',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [0],
+                ],
+                'PMA_BUFFER',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    ['0'],
+                ],
+                'PMA_BUFFER',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [
+                        -1,
+                    ],
+                ],
+                '…R…',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    ['-1'],
+                ],
+                '…R…',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [
+                        0,
+                        2,
+                    ],
+                ],
+                'PM…',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    'PMA_BUFFER',
+                    [
+                        '0',
+                        '2',
+                    ],
+                ],
+                'PM…',
+            ],
+            [
+                new Text_Plain_Substring(),
+                [
+                    2,
+                    [],
+                ],
+                '2',
             ],
             [
                 new Text_Plain_Longtoipv4(),
