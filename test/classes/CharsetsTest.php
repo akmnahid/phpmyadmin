@@ -1,36 +1,83 @@
 <?php
-/* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  * Tests for MySQL Charsets
- *
- * @package PhpMyAdmin-test
  */
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\Tests;
 
 use PhpMyAdmin\Charsets;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for MySQL Charsets
- *
- * @package PhpMyAdmin-test
  */
-class CharsetsTest extends TestCase
+class CharsetsTest extends AbstractTestCase
 {
-    /**
-     * @return void
-     */
     protected function setUp(): void
     {
+        parent::setUp();
+        parent::setGlobalDbi();
+        $GLOBALS['server'] = 0;
         $GLOBALS['cfg']['DBG']['sql'] = false;
         $GLOBALS['cfg']['Server']['DisableIS'] = false;
     }
 
-    /**
-     * @return void
-     */
+    public function testGetServerCharset(): void
+    {
+        $this->dummyDbi->addResult(
+            'SHOW SESSION VARIABLES LIKE \'character_set_server\';',
+            [
+                [
+                    'character_set_server',
+                    'utf8mb3',
+                ],
+            ],
+            [
+                'Variable_name',
+                'Value',
+            ]
+        );
+        $this->dummyDbi->addResult(
+            'SHOW SESSION VARIABLES LIKE \'character_set_server\';',
+            false
+        );
+        $this->dummyDbi->addResult(
+            'SELECT @@character_set_server;',
+            false
+        );
+        $this->dummyDbi->addResult(
+            'SHOW SESSION VARIABLES LIKE \'character_set_server\';',
+            false
+        );
+        $this->dummyDbi->addResult(
+            'SELECT @@character_set_server;',
+            [
+                ['utf8mb3'],
+            ]
+        );
+
+        $charset = Charsets::getServerCharset(
+            $GLOBALS['dbi'],
+            $GLOBALS['cfg']['Server']['DisableIS']
+        );
+        $this->assertSame('utf8', $charset->getName());
+
+        $charset = Charsets::getServerCharset(
+            $GLOBALS['dbi'],
+            $GLOBALS['cfg']['Server']['DisableIS']
+        );
+        $this->assertSame('Unknown', $charset->getName());
+
+        $charset = Charsets::getServerCharset(
+            $GLOBALS['dbi'],
+            $GLOBALS['cfg']['Server']['DisableIS']
+        );
+        $this->assertSame('utf8', $charset->getName());
+
+        $this->assertAllQueriesConsumed();
+    }
+
     public function testFindCollationByName(): void
     {
         $this->assertNull(Charsets::findCollationByName(
